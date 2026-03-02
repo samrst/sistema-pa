@@ -17,8 +17,8 @@ const Index = () => {
               <span className="text-primary-foreground font-heading font-bold text-sm">SA</span>
             </div>
             <div>
-              <h1 className="font-heading font-bold text-lg leading-tight">Workshop SAEP 2026</h1>
-              <p className="text-xs text-muted-foreground">Plano de Ações — FSA</p>
+              <h1 className="font-heading font-bold text-lg leading-tight">Workshop SAEP 2026 </h1>
+              <p className="text-xs text-muted-foreground">Plano de Ações — SENAI FEIRA DE SANTANA </p>
             </div>
           </div>
         </div>
