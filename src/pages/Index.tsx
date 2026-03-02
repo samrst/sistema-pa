@@ -14,7 +14,7 @@ const Index = () => {
         <div className="container flex items-center justify-between h-16 px-4">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-heading font-bold text-sm">SA</span>
+              <span className="text-primary-foreground font-heading font-bold text-sm">SAEP</span>
             </div>
             <div>
               <h1 className="font-heading font-bold text-lg leading-tight">Workshop SAEP 2026 </h1>
