@@ -104,6 +104,6 @@
 
 @layer utilities {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-sm;
+    @apply bg-card/80 backdrop-red-md border border-border/50 shadow-sm;
   }
 }
