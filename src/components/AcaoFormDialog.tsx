@@ -293,10 +293,6 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
               </div>
             </div>
             <div>
-              <Label>Plano de mitigação</Label>
-              <Textarea value={form.plano_mitigacao} onChange={(e) => set("plano_mitigacao", e.target.value)} rows={2} />
-            </div>
-            <div>
               <Label>Custo estimado (R$)</Label>
               <Input type="number" step="0.01" value={form.custo_estimado} onChange={(e) => set("custo_estimado", e.target.value)} />
             </div>
