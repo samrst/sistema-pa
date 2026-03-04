@@ -195,26 +195,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
                 <SelectContent>{CRITICIDADE_OPTIONS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-
-            <Separator />
-            <SectionTitle>3. Metas</SectionTitle>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label>Meta Objetiva (% ou nota)</Label>
-                <Input value={form.meta_objetiva} onChange={(e) => set("meta_objetiva", e.target.value)} />
-              </div>
-              <div>
-                <Label>Meta Prática (% proficientes)</Label>
-                <Input value={form.meta_pratica} onChange={(e) => set("meta_pratica", e.target.value)} />
-              </div>
-              <div>
-                <Label>Meta Prazo</Label>
-                <Input type="date" value={form.meta_prazo} onChange={(e) => set("meta_prazo", e.target.value)} />
-              </div>
-            </div>
-
-            <Separator />
-            <SectionTitle>4. Ação Planejada</SectionTitle>
+            <SectionTitle>3. Ação Planejada</SectionTitle>
             <div>
               <Label>Ação *</Label>
               <Textarea value={form.acao} onChange={(e) => set("acao", e.target.value)} rows={2} />
@@ -234,7 +215,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
             </div>
 
             <Separator />
-            <SectionTitle>5. Responsáveis</SectionTitle>
+            <SectionTitle>4. Responsáveis</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Responsável principal *</Label>
@@ -262,7 +243,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
             </div>
 
             <Separator />
-            <SectionTitle>6. Prazos</SectionTitle>
+            <SectionTitle>5. Prazos</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Data de Início</Label>
@@ -280,7 +261,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
             )}
 
             <Separator />
-            <SectionTitle>7. Acompanhamento</SectionTitle>
+            <SectionTitle>6. Acompanhamento</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Status</Label>
@@ -321,7 +302,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
             </div>
 
             <Separator />
-            <SectionTitle>8. Observações</SectionTitle>
+            <SectionTitle>7. Observações</SectionTitle>
             <Textarea value={form.observacoes} onChange={(e) => set("observacoes", e.target.value)} rows={3} placeholder="Anotações, pontos de atenção, decisões..." />
 
             <div className="flex justify-end gap-2 pt-4">
