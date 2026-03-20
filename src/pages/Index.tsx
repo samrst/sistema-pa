@@ -39,6 +39,9 @@ const Index = () => {
             <TabsTrigger value="checklist" className="gap-1.5">
               <ClipboardCheck className="h-4 w-4" /> Checklist
             </TabsTrigger>
+            <TabsTrigger value="analise" className="gap-1.5">
+              <BrainCircuit className="h-4 w-4" /> Análise IA
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="acoes">
