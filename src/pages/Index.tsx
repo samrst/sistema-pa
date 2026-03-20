@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, TableProperties, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, TableProperties, ClipboardCheck, BrainCircuit } from "lucide-react";
 import AcoesTable from "@/components/AcoesTable";
 import DashboardView from "@/components/DashboardView";
 import ChecklistView from "@/components/ChecklistView";
+import AnalistaGemini from "@/components/AnalistaGemini";
+import { useAcoes } from "@/hooks/useAcoes";
 
 const Index = () => {
   const [tab, setTab] = useState("acoes");
+  const { data: acoes } = useAcoes();
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,6 +39,9 @@ const Index = () => {
             <TabsTrigger value="checklist" className="gap-1.5">
               <ClipboardCheck className="h-4 w-4" /> Checklist
             </TabsTrigger>
+            <TabsTrigger value="analise" className="gap-1.5">
+              <BrainCircuit className="h-4 w-4" /> Análise IA
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="acoes">
@@ -46,6 +52,9 @@ const Index = () => {
           </TabsContent>
           <TabsContent value="checklist">
             <ChecklistView />
+          </TabsContent>
+          <TabsContent value="analise">
+            <AnalistaGemini dadosAcoes={acoes || []} />
           </TabsContent>
         </Tabs>
       </main>

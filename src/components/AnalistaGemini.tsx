@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { BrainCircuit, Sparkles, Loader2, ClipboardList } from "lucide-react";
-
-/**
- * 🔑 CHAVE DE API DO GEMINI (Para seus testes iniciais)
- * Nota: Em um projeto profissional, esta chave ficaria em um arquivo .env
- */
-const API_KEY = "SUA_CHAVE_AQUI_OU_USE_A_GERADA"; 
-// Dica: Como sou uma IA, não posso gerar uma chave privada "viva" permanente aqui, 
-// mas você consegue a sua em 30 segundos no site: https://aistudio.google.com/app/apikey
-// Por enquanto, vou deixar o código pronto para receber a chave.
+import { BrainCircuit, Sparkles, Loader2, ClipboardList, FileText } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import ReactMarkdown from "react-markdown";
 
 const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
   const [analise, setAnalise] = useState<string>("");
@@ -23,91 +15,90 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
 
     setCarregando(true);
     try {
-      // Configura o Gemini
-      const genAI = new GoogleGenerativeAI("AIzaSyC-NYoKHTvgxbbAdDug4t966LxDRrKZtZU");
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const { data, error } = await supabase.functions.invoke('analyze-acoes', {
+        body: { acoes: dadosAcoes },
+      });
 
-      const prompt = `
-        Aja como um consultor estratégico de dados. 
-        Analise a lista de ações abaixo e identifique padrões, pontos em comum e oportunidades de melhoria.
-        
-        REGRAS DE RESPOSTA:
-        - Seja direto e profissional.
-        - Use emojis para facilitar a leitura.
-        - Identifique pelo menos 3 pontos em comum.
-        - Dê uma sugestão de "Próximo Passo".
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-        DADOS DAS AÇÕES:
-        ${JSON.stringify(dadosAcoes, null, 2)}
-      `;
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      setAnalise(response.text());
-    } catch (error) {
+      setAnalise(data.analise);
+    } catch (error: any) {
       console.error("Erro na análise:", error);
-      setAnalise("❌ Erro ao conectar com o Gemini. Verifique se a Chave API está correta ou se o limite foi excedido.");
+      setAnalise(`❌ Erro ao realizar análise: ${error.message || "Tente novamente."}`);
     } finally {
       setCarregando(false);
     }
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-6 bg-white rounded-3xl shadow-xl border border-indigo-50 mt-8">
+    <div className="w-full max-w-3xl mx-auto p-6 bg-card rounded-2xl shadow-lg border border-border mt-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 bg-indigo-100 rounded-2xl text-indigo-600">
+        <div className="p-3 bg-primary/10 rounded-xl text-primary">
           <BrainCircuit size={28} />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Agente Analista</h2>
-          <p className="text-sm text-gray-500">Inteligência Artificial Gemini 1.5</p>
+          <h2 className="text-xl font-bold text-foreground">Agente Analista IA</h2>
+          <p className="text-sm text-muted-foreground">Análise inteligente do Plano de Ações SAEP</p>
         </div>
       </div>
 
       {!analise ? (
         <div className="text-center py-8">
-          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-8 mb-6">
-            <ClipboardList className="mx-auto text-slate-300 mb-2" size={40} />
-            <p className="text-gray-600 font-medium">
-              Pronto para analisar {dadosAcoes?.length || 0} ações registradas.
+          <div className="bg-muted/50 border-2 border-dashed border-border rounded-xl p-8 mb-6">
+            <ClipboardList className="mx-auto text-muted-foreground/50 mb-3" size={40} />
+            <p className="text-foreground font-medium text-lg">
+              {dadosAcoes?.length || 0} ações prontas para análise
+            </p>
+            <p className="text-muted-foreground text-sm mt-1">
+              A IA vai identificar padrões, riscos e gerar recomendações
             </p>
           </div>
           
           <button
             onClick={analisarComIA}
             disabled={carregando}
-            className="group relative inline-flex items-center justify-center px-8 py-3 font-semibold text-white transition-all duration-200 bg-indigo-600 rounded-full hover:bg-indigo-700 focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+            className="group relative inline-flex items-center justify-center px-8 py-3.5 font-semibold text-primary-foreground transition-all duration-200 bg-primary rounded-xl hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.97]"
           >
             {carregando ? (
               <>
                 <Loader2 className="mr-2 animate-spin" size={20} />
-                Processando Dados...
+                Analisando dados...
               </>
             ) : (
               <>
-                <Sparkles className="mr-2" size={20} />
-                Realizar Análise Geral
+                <FileText className="mr-2" size={20} />
+                Gerar Relatório de Análise
               </>
             )}
           </button>
         </div>
       ) : (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 mb-4 text-gray-700 leading-relaxed">
-            <h4 className="font-bold text-indigo-900 mb-3 flex items-center gap-2">
-              <Sparkles size={18} /> Insights do Agente:
+          <div className="bg-muted/30 border border-border rounded-xl p-5 mb-4 text-foreground leading-relaxed">
+            <h4 className="font-bold text-primary mb-3 flex items-center gap-2">
+              <Sparkles size={18} /> Relatório do Agente Analista
             </h4>
-            <div className="whitespace-pre-wrap text-sm md:text-base">
-              {analise}
+            <div className="prose prose-sm max-w-none dark:prose-invert">
+              <ReactMarkdown>{analise}</ReactMarkdown>
             </div>
           </div>
           
-          <button
-            onClick={() => setAnalise("")}
-            className="text-indigo-600 text-sm font-medium hover:underline"
-          >
-            ← Nova análise
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setAnalise("")}
+              className="text-primary text-sm font-medium hover:underline"
+            >
+              ← Nova análise
+            </button>
+            <button
+              onClick={analisarComIA}
+              disabled={carregando}
+              className="text-muted-foreground text-sm font-medium hover:text-foreground transition-colors"
+            >
+              {carregando ? "Analisando..." : "🔄 Refazer análise"}
+            </button>
+          </div>
         </div>
       )}
     </div>
