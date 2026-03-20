@@ -9,6 +9,7 @@ import { useAcoes, useDeleteAcao, type Acao } from "@/hooks/useAcoes";
 import AcaoFormDialog from "./AcaoFormDialog";
 import { toast } from "sonner";
 import { CURSOS, STATUS_OPTIONS } from "@/lib/constants";
+import { exportAcoesPdf } from "@/lib/exportPdf";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const statusColor: Record<string, string> = {
