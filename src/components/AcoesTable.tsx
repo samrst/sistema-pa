@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Search } from "lucide-react";
+import { Pencil, Trash2, Plus, Search, FileDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAcoes, useDeleteAcao, type Acao } from "@/hooks/useAcoes";
 import AcaoFormDialog from "./AcaoFormDialog";
 import { toast } from "sonner";
 import { CURSOS, STATUS_OPTIONS } from "@/lib/constants";
+import { exportAcoesPdf } from "@/lib/exportPdf";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const statusColor: Record<string, string> = {
@@ -85,9 +86,14 @@ export default function AcoesTable() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={handleNew} className="shrink-0">
-          <Plus className="h-4 w-4 mr-1" /> Nova Ação
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" onClick={() => exportAcoesPdf(filtered)} disabled={filtered.length === 0}>
+            <FileDown className="h-4 w-4 mr-1" /> Exportar PDF
+          </Button>
+          <Button onClick={handleNew}>
+            <Plus className="h-4 w-4 mr-1" /> Nova Ação
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border bg-card overflow-x-auto">
