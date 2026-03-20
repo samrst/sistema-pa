@@ -86,9 +86,14 @@ export default function AcoesTable() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={handleNew} className="shrink-0">
-          <Plus className="h-4 w-4 mr-1" /> Nova Ação
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" onClick={() => exportAcoesPdf(filtered)} disabled={filtered.length === 0}>
+            <FileDown className="h-4 w-4 mr-1" /> Exportar PDF
+          </Button>
+          <Button onClick={handleNew}>
+            <Plus className="h-4 w-4 mr-1" /> Nova Ação
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border bg-card overflow-x-auto">
