@@ -9,6 +9,7 @@ import { useAcoes } from "@/hooks/useAcoes";
 
 const Index = () => {
   const [tab, setTab] = useState("acoes");
+  const { data: acoes } = useAcoes();
 
   return (
     <div className="min-h-screen bg-background">
