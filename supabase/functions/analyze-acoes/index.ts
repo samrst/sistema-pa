@@ -20,8 +20,6 @@ serve(async (req) => {
       });
     }
 
-    const hoje = new Date().toISOString().slice(0, 10);
-
     const systemPrompt = `Você é um consultor estratégico especializado em educação profissional e técnica do SENAI.
 Seu papel é analisar planos de ação do Workshop SAEP e gerar relatórios executivos claros.
 
@@ -29,28 +27,23 @@ REGRAS:
 - Seja direto, profissional e objetivo.
 - Use emojis para facilitar a leitura visual.
 - Estruture a resposta em seções claras com títulos em negrito.
-- PRIORIDADE MÁXIMA: rastreie e monitore os prazos de cada ação. Compare data_fim com a data de hoje (${hoje}).
-- Identifique TODAS as ações vencidas (data_fim < hoje e status != Concluído) e liste-as com destaque vermelho 🔴.
-- Identifique ações próximas ao vencimento (7 dias ou menos) e alerte com ⚠️.
-- Agrupe alertas de prazo por CURSO.
+- Sempre inclua: Resumo Executivo, Pontos em Comum, Riscos Identificados, Recomendações Prioritárias e Próximos Passos.
 - Identifique padrões entre cursos, capacidades SAEP, tipos de ação e status.
+- Destaque ações atrasadas ou com risco alto.
 - Forneça sugestões práticas e acionáveis.`;
 
-    const userPrompt = `Data de hoje: ${hoje}
-
-Analise as ${acoes.length} ações do plano SAEP abaixo e gere um relatório executivo completo com foco em MONITORAMENTO DE PRAZOS:
+    const userPrompt = `Analise as ${acoes.length} ações do plano SAEP abaixo e gere um relatório executivo completo:
 
 DADOS DAS AÇÕES:
 ${JSON.stringify(acoes, null, 2)}
 
 Gere o relatório com as seguintes seções:
-1. 🚨 **Monitoramento de Prazos** — liste TODAS as ações vencidas (🔴) e próximas ao vencimento (⚠️), agrupadas por curso, com dias de atraso ou dias restantes
-2. 📊 **Resumo Executivo** — visão geral dos números (total, concluídas, atrasadas, em andamento)
-3. 🔗 **Pontos em Comum** — padrões identificados entre as ações (mínimo 3)
-4. ⚠️ **Riscos e Alertas** — ações com risco alto, atrasadas ou com impeditivos
-5. 🎯 **Recomendações Prioritárias** — top 3 ações mais urgentes para destravar
-6. 📈 **Análise por Curso** — distribuição e observações por curso
-7. ✅ **Próximos Passos** — sugestões concretas para o time`;
+1. 📊 **Resumo Executivo** — visão geral dos números
+2. 🔗 **Pontos em Comum** — padrões identificados entre as ações (mínimo 3)
+3. ⚠️ **Riscos e Alertas** — ações com risco alto, atrasadas ou com impeditivos
+4. 🎯 **Recomendações Prioritárias** — top 3 ações mais urgentes
+5. 📈 **Análise por Curso** — distribuição e observações por curso
+6. ✅ **Próximos Passos** — sugestões concretas para o time`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

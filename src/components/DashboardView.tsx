@@ -1,9 +1,7 @@
 import { useAcoes } from "@/hooks/useAcoes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { ClipboardList, CheckCircle2, AlertTriangle, Clock, Siren } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { differenceInDays, parseISO } from "date-fns";
+import { ClipboardList, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
 
 const PIE_COLORS = [
   "hsl(215, 80%, 48%)",
@@ -12,31 +10,15 @@ const PIE_COLORS = [
   "hsl(0, 72%, 51%)",
 ];
 
-function diasParaVencer(dataFim: string | null) {
-  if (!dataFim) return null;
-  return differenceInDays(parseISO(dataFim), new Date());
-}
-
 export default function DashboardView() {
   const { data: acoes } = useAcoes();
   const all = acoes || [];
 
   const total = all.length;
   const concluidas = all.filter((a) => a.status === "Concluído").length;
-  const atrasadas = all.filter((a) => a.data_fim && new Date(a.data_fim) < new Date() && a.status !== "Concluído");
-  const proximasVencer = all.filter((a) => {
-    const dias = diasParaVencer(a.data_fim);
-    return dias !== null && dias >= 0 && dias <= 7 && a.status !== "Concluído";
-  });
+  const atrasadas = all.filter((a) => a.data_fim && new Date(a.data_fim) < new Date() && a.status !== "Concluído").length;
   const emAndamento = all.filter((a) => a.status === "Em andamento").length;
   const pctConcluidas = total ? Math.round((concluidas / total) * 100) : 0;
-
-  // Atrasadas agrupadas por curso
-  const atrasadasPorCurso: Record<string, typeof atrasadas> = {};
-  atrasadas.forEach((a) => {
-    if (!atrasadasPorCurso[a.curso]) atrasadasPorCurso[a.curso] = [];
-    atrasadasPorCurso[a.curso].push(a);
-  });
 
   // By curso
   const byCurso: Record<string, number> = {};
@@ -57,7 +39,7 @@ export default function DashboardView() {
     { label: "Total de Ações", value: total, icon: ClipboardList, color: "text-primary" },
     { label: "Concluídas", value: `${pctConcluidas}%`, icon: CheckCircle2, color: "text-success" },
     { label: "Em Andamento", value: emAndamento, icon: Clock, color: "text-info" },
-    { label: "Atrasadas", value: atrasadas.length, icon: AlertTriangle, color: "text-destructive" },
+    { label: "Atrasadas", value: atrasadas, icon: AlertTriangle, color: "text-destructive" },
   ];
 
   return (
@@ -77,74 +59,6 @@ export default function DashboardView() {
           </Card>
         ))}
       </div>
-
-      {/* ALERTAS DE PRAZO */}
-      {(atrasadas.length > 0 || proximasVencer.length > 0) && (
-        <div className="space-y-4">
-          {atrasadas.length > 0 && (
-            <Card className="border-destructive/50 bg-destructive/5">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-heading flex items-center gap-2 text-destructive">
-                  <Siren className="h-5 w-5" /> Ações com Prazo Vencido ({atrasadas.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {Object.entries(atrasadasPorCurso).map(([curso, items]) => (
-                    <div key={curso}>
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <Badge variant="destructive" className="text-xs">{curso}</Badge>
-                        <span className="text-xs text-muted-foreground">{items.length} ação(ões)</span>
-                      </div>
-                      <div className="ml-2 space-y-1">
-                        {items.map((a) => {
-                          const diasAtraso = Math.abs(diasParaVencer(a.data_fim) || 0);
-                          return (
-                            <div key={a.id} className="flex items-center gap-2 text-sm bg-destructive/10 rounded-lg px-3 py-2 border border-destructive/20">
-                              <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                              <span className="font-medium text-destructive truncate">{a.acao}</span>
-                              <span className="ml-auto text-xs text-destructive font-semibold whitespace-nowrap">
-                                {diasAtraso} dia(s) de atraso
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {proximasVencer.length > 0 && (
-            <Card className="border-amber-500/50 bg-amber-500/5">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-heading flex items-center gap-2 text-amber-600">
-                  <Clock className="h-5 w-5" /> Ações Próximas ao Vencimento ({proximasVencer.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-1">
-                  {proximasVencer.map((a) => {
-                    const dias = diasParaVencer(a.data_fim) || 0;
-                    return (
-                      <div key={a.id} className="flex items-center gap-2 text-sm bg-amber-500/10 rounded-lg px-3 py-2 border border-amber-500/20">
-                        <Clock className="h-4 w-4 text-amber-600 shrink-0" />
-                        <Badge variant="outline" className="text-xs shrink-0">{a.curso}</Badge>
-                        <span className="truncate">{a.acao}</span>
-                        <span className="ml-auto text-xs font-semibold text-amber-600 whitespace-nowrap">
-                          {dias === 0 ? "Vence hoje!" : `${dias} dia(s) restante(s)`}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Card className="glass-card">
