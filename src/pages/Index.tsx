@@ -53,6 +53,9 @@ const Index = () => {
           <TabsContent value="checklist">
             <ChecklistView />
           </TabsContent>
+          <TabsContent value="analise">
+            <AnalistaGemini dadosAcoes={acoes || []} />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
