@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, TableProperties, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, TableProperties, ClipboardCheck, BrainCircuit } from "lucide-react";
 import AcoesTable from "@/components/AcoesTable";
 import DashboardView from "@/components/DashboardView";
 import ChecklistView from "@/components/ChecklistView";
+import AnalistaGemini from "@/components/AnalistaGemini";
+import { useAcoes } from "@/hooks/useAcoes";
 
 const Index = () => {
   const [tab, setTab] = useState("acoes");
