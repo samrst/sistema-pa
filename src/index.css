@@ -107,3 +107,76 @@
     @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-sm;
   }
 }
+
+/* AI Report Styles */
+.relatorio-ia .prose h2 {
+  @apply text-lg font-bold font-heading mt-8 mb-3 pb-2 border-b-2 border-primary/30 text-primary;
+}
+
+.relatorio-ia .prose h2:first-of-type {
+  @apply mt-2;
+}
+
+.relatorio-ia .prose h3 {
+  @apply text-base font-semibold font-heading mt-5 mb-2 text-foreground;
+}
+
+.relatorio-ia .prose h4 {
+  @apply text-sm font-semibold mt-4 mb-1.5 text-muted-foreground uppercase tracking-wide;
+}
+
+.relatorio-ia .prose hr {
+  @apply my-6 border-border/60;
+}
+
+.relatorio-ia .prose table {
+  @apply w-full text-xs border-collapse rounded-lg overflow-hidden my-4 shadow-sm;
+}
+
+.relatorio-ia .prose thead {
+  @apply bg-primary text-primary-foreground;
+}
+
+.relatorio-ia .prose thead th {
+  @apply px-3 py-2.5 text-left font-semibold text-xs uppercase tracking-wider border-0;
+}
+
+.relatorio-ia .prose tbody tr {
+  @apply border-b border-border/40 transition-colors;
+}
+
+.relatorio-ia .prose tbody tr:nth-child(even) {
+  @apply bg-muted/30;
+}
+
+.relatorio-ia .prose tbody tr:hover {
+  @apply bg-primary/5;
+}
+
+.relatorio-ia .prose tbody td {
+  @apply px-3 py-2 text-foreground/90 border-0;
+}
+
+.relatorio-ia .prose ul {
+  @apply my-3 space-y-1.5;
+}
+
+.relatorio-ia .prose li {
+  @apply text-sm leading-relaxed;
+}
+
+.relatorio-ia .prose ol {
+  @apply my-3 space-y-2;
+}
+
+.relatorio-ia .prose ol li {
+  @apply pl-1;
+}
+
+.relatorio-ia .prose strong {
+  @apply text-foreground font-semibold;
+}
+
+.relatorio-ia .prose p {
+  @apply text-sm leading-relaxed my-2;
+}

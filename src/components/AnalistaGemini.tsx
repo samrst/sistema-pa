@@ -75,10 +75,19 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
         </div>
       ) : (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-muted/30 border border-border rounded-xl p-5 mb-4 text-foreground leading-relaxed">
-            <h4 className="font-bold text-primary mb-3 flex items-center gap-2">
-              <Sparkles size={18} /> Relatório do Agente Analista
-            </h4>
+          {/* Report Header */}
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Sparkles size={20} className="text-primary" />
+            </div>
+            <div>
+              <h3 className="font-heading font-bold text-foreground text-base">Relatório Executivo — Plano de Ações SAEP</h3>
+              <p className="text-xs text-muted-foreground">Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+            </div>
+          </div>
+
+          {/* Report Body */}
+          <div className="relatorio-ia bg-card border border-border rounded-xl p-5 sm:p-6 mb-4 text-foreground leading-relaxed overflow-x-auto">
             <div className="prose prose-sm max-w-none dark:prose-invert">
               <ReactMarkdown>{analise}</ReactMarkdown>
             </div>
