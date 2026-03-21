@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrainCircuit, Sparkles, Loader2, ClipboardList, FileText } from "lucide-react";
+import { BrainCircuit, Sparkles, Loader2, ClipboardList, FileText, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 
@@ -32,80 +32,88 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-6 bg-card rounded-2xl shadow-lg border border-border mt-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 bg-primary/10 rounded-xl text-primary">
-          <BrainCircuit size={28} />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Agente Analista IA</h2>
-          <p className="text-sm text-muted-foreground">Análise inteligente do Plano de Ações SAEP</p>
-        </div>
-      </div>
-
+    <div className="w-full max-w-4xl mx-auto px-2 sm:px-4">
       {!analise ? (
-        <div className="text-center py-8">
-          <div className="bg-muted/50 border-2 border-dashed border-border rounded-xl p-8 mb-6">
-            <ClipboardList className="mx-auto text-muted-foreground/50 mb-3" size={40} />
-            <p className="text-foreground font-medium text-lg">
-              {dadosAcoes?.length || 0} ações prontas para análise
-            </p>
-            <p className="text-muted-foreground text-sm mt-1">
-              A IA vai identificar padrões, riscos e gerar recomendações
-            </p>
-          </div>
-          
-          <button
-            onClick={analisarComIA}
-            disabled={carregando}
-            className="group relative inline-flex items-center justify-center px-8 py-3.5 font-semibold text-primary-foreground transition-all duration-200 bg-primary rounded-xl hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.97]"
-          >
-            {carregando ? (
-              <>
-                <Loader2 className="mr-2 animate-spin" size={20} />
-                Analisando dados...
-              </>
-            ) : (
-              <>
-                <FileText className="mr-2" size={20} />
-                Gerar Relatório de Análise
-              </>
-            )}
-          </button>
-        </div>
-      ) : (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {/* Report Header */}
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Sparkles size={20} className="text-primary" />
+        <div className="bg-card rounded-2xl shadow-lg border border-border p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-primary/10 rounded-xl text-primary">
+              <BrainCircuit size={28} />
             </div>
             <div>
-              <h3 className="font-heading font-bold text-foreground text-base">Relatório Executivo — Plano de Ações SAEP</h3>
-              <p className="text-xs text-muted-foreground">Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+              <h2 className="text-lg font-bold text-foreground">Agente Analista IA</h2>
+              <p className="text-xs text-muted-foreground">Relatório executivo inteligente do Plano SAEP</p>
             </div>
           </div>
 
-          {/* Report Body */}
-          <div className="relatorio-ia bg-card border border-border rounded-xl p-5 sm:p-6 mb-4 text-foreground leading-relaxed overflow-x-auto">
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <ReactMarkdown>{analise}</ReactMarkdown>
+          <div className="bg-muted/40 border border-dashed border-border rounded-xl p-6 mb-6 text-center">
+            <ClipboardList className="mx-auto text-muted-foreground/40 mb-3" size={36} />
+            <p className="text-foreground font-semibold text-base">
+              {dadosAcoes?.length || 0} ações prontas para análise
+            </p>
+            <p className="text-muted-foreground text-xs mt-1 max-w-md mx-auto">
+              A IA vai cruzar dados entre cursos, identificar padrões em comum, ações críticas, focos estratégicos e gerar recomendações para a gestão.
+            </p>
+          </div>
+          
+          <div className="text-center">
+            <button
+              onClick={analisarComIA}
+              disabled={carregando}
+              className="inline-flex items-center justify-center px-8 py-3 font-semibold text-sm text-primary-foreground bg-primary rounded-xl hover:bg-primary/90 transition-all disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.97]"
+            >
+              {carregando ? (
+                <>
+                  <Loader2 className="mr-2 animate-spin" size={18} />
+                  Analisando dados...
+                </>
+              ) : (
+                <>
+                  <FileText className="mr-2" size={18} />
+                  Gerar Relatório Executivo
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-3">
+          {/* Report Header */}
+          <div className="bg-card border border-border rounded-2xl shadow-lg overflow-hidden">
+            <div className="bg-primary px-4 sm:px-6 py-4 flex items-center gap-3">
+              <div className="p-2 bg-primary-foreground/20 rounded-lg">
+                <Sparkles size={20} className="text-primary-foreground" />
+              </div>
+              <div>
+                <h3 className="font-bold text-primary-foreground text-sm sm:text-base">Relatório Executivo — Plano de Ações SAEP</h3>
+                <p className="text-[11px] text-primary-foreground/70">
+                  Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {dadosAcoes.length} ações analisadas
+                </p>
+              </div>
+            </div>
+
+            {/* Report Body */}
+            <div className="relatorio-ia p-4 sm:p-6">
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <ReactMarkdown>{analise}</ReactMarkdown>
+              </div>
             </div>
           </div>
           
-          <div className="flex gap-3">
+          {/* Actions */}
+          <div className="flex flex-wrap gap-3 px-1">
             <button
               onClick={() => setAnalise("")}
-              className="text-primary text-sm font-medium hover:underline"
+              className="text-xs font-medium text-primary hover:underline"
             >
               ← Nova análise
             </button>
             <button
               onClick={analisarComIA}
               disabled={carregando}
-              className="text-muted-foreground text-sm font-medium hover:text-foreground transition-colors"
+              className="inline-flex items-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
             >
-              {carregando ? "Analisando..." : "🔄 Refazer análise"}
+              <RotateCcw size={12} className={`mr-1 ${carregando ? 'animate-spin' : ''}`} />
+              {carregando ? "Analisando..." : "Refazer análise"}
             </button>
           </div>
         </div>
