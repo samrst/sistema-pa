@@ -20,30 +20,64 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Você é um consultor estratégico especializado em educação profissional e técnica do SENAI.
-Seu papel é analisar planos de ação do Workshop SAEP e gerar relatórios executivos claros.
+    const hoje = new Date().toISOString().slice(0, 10);
 
-REGRAS:
-- Seja direto, profissional e objetivo.
-- Use emojis para facilitar a leitura visual.
-- Estruture a resposta em seções claras com títulos em negrito.
-- Sempre inclua: Resumo Executivo, Pontos em Comum, Riscos Identificados, Recomendações Prioritárias e Próximos Passos.
-- Identifique padrões entre cursos, capacidades SAEP, tipos de ação e status.
-- Destaque ações atrasadas ou com risco alto.
-- Forneça sugestões práticas e acionáveis.`;
+    const systemPrompt = `Você é um executivo de gestão educacional do SENAI, especialista em análise estratégica de planos de ação.
+Seu papel é gerar relatórios gerenciais claros, diretos e acionáveis para a alta gestão.
 
-    const userPrompt = `Analise as ${acoes.length} ações do plano SAEP abaixo e gere um relatório executivo completo:
+REGRAS DE FORMATAÇÃO:
+- Use tabelas Markdown sempre que possível para organizar dados (use | coluna1 | coluna2 |).
+- Seja direto e objetivo — evite textos longos sem estrutura.
+- Use emojis com moderação para sinalização visual (🔴 🟡 🟢 ⚠️ ✅).
+- Estruture em seções claras com títulos em negrito.
+- A data de hoje é: ${hoje}. Use isso para calcular atrasos e proximidade de prazos.`;
+
+    const userPrompt = `Analise as ${acoes.length} ações do plano SAEP como um executivo de gestão educacional. Data de hoje: ${hoje}.
 
 DADOS DAS AÇÕES:
 ${JSON.stringify(acoes, null, 2)}
 
-Gere o relatório com as seguintes seções:
-1. 📊 **Resumo Executivo** — visão geral dos números
-2. 🔗 **Pontos em Comum** — padrões identificados entre as ações (mínimo 3)
-3. ⚠️ **Riscos e Alertas** — ações com risco alto, atrasadas ou com impeditivos
-4. 🎯 **Recomendações Prioritárias** — top 3 ações mais urgentes
-5. 📈 **Análise por Curso** — distribuição e observações por curso
-6. ✅ **Próximos Passos** — sugestões concretas para o time`;
+Gere o relatório executivo com EXATAMENTE estas seções:
+
+---
+
+## 1. 📊 Painel Executivo
+Tabela resumo com: Total de ações | Concluídas | Em andamento | Não iniciadas | Com impeditivo | Atrasadas (data_fim < hoje e status ≠ Concluído).
+Calcule os percentuais.
+
+## 2. 🔴 Monitoramento de Prazos (CRÍTICO)
+Tabela com TODAS as ações que estão atrasadas ou com prazo próximo (até 7 dias), com colunas:
+| Curso | Ação (resumida) | Responsável | Data Fim | Status | Situação |
+
+Onde "Situação" é:
+- 🔴 ATRASADA (data_fim < hoje e status ≠ Concluído)
+- 🟡 PRAZO PRÓXIMO (data_fim nos próximos 7 dias)
+- ⚠️ SEM PRAZO DEFINIDO (data_fim vazia)
+
+Se não houver ações nessas condições, informe isso.
+
+## 3. 🔗 Cruzamentos e Padrões Identificados
+Analise cruzamentos entre cursos — o que os professores estão fazendo em comum? Quais ações se repetem? Quais capacidades SAEP concentram mais problemas?
+Apresente em tabela quando possível:
+| Padrão Identificado | Cursos Envolvidos | Frequência |
+
+## 4. 📋 Panorama por Curso
+Para cada curso com ações cadastradas, faça uma mini-tabela:
+| Ação | Tipo | Status | Risco | Prazo |
+Adicione uma linha de observação abaixo de cada tabela com o ponto de atenção principal daquele curso.
+
+## 5. 💡 Sugestões Estratégicas da IA
+Com base nos padrões identificados, sugira:
+- Ações que poderiam ser unificadas entre cursos (economia de esforço)
+- Capacitações que beneficiariam múltiplas equipes
+- Riscos sistêmicos que precisam de atenção da gestão
+- Oportunidades de melhoria baseadas no que está funcionando
+
+## 6. ✅ Recomendações Imediatas para a Gestão
+Lista numerada das 3-5 ações mais urgentes que a gestão deve tomar AGORA, com justificativa curta.
+
+---
+Seja direto, use tabelas, e foque no que a gestão precisa saber para tomar decisões.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
