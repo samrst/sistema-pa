@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { BrainCircuit, Sparkles, Loader2, ClipboardList, FileText, RotateCcw } from "lucide-react";
+import { BrainCircuit, Sparkles, Loader2, ClipboardList, FileText, RotateCcw, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
+import { exportRelatorioPdf } from "@/lib/exportRelatorioPdf";
 
 const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
   const [analise, setAnalise] = useState<string>("");
@@ -79,16 +80,26 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-3">
           {/* Report Header */}
           <div className="bg-card border border-border rounded-2xl shadow-lg overflow-hidden">
-            <div className="bg-primary px-4 sm:px-6 py-4 flex items-center gap-3">
-              <div className="p-2 bg-primary-foreground/20 rounded-lg">
-                <Sparkles size={20} className="text-primary-foreground" />
+            <div className="bg-primary px-4 sm:px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary-foreground/20 rounded-lg">
+                  <Sparkles size={20} className="text-primary-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-primary-foreground text-sm sm:text-base">Relatório Executivo — Plano de Ações SAEP</h3>
+                  <p className="text-[11px] text-primary-foreground/70">
+                    SENAI Feira de Santana · Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {dadosAcoes.length} ações
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-primary-foreground text-sm sm:text-base">Relatório Executivo — Plano de Ações SAEP</h3>
-                <p className="text-[11px] text-primary-foreground/70">
-                  Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {dadosAcoes.length} ações analisadas
-                </p>
-              </div>
+              <button
+                onClick={() => exportRelatorioPdf(analise, dadosAcoes.length)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground rounded-lg transition-colors"
+                title="Baixar relatório em PDF"
+              >
+                <Download size={14} />
+                <span className="hidden sm:inline">Baixar PDF</span>
+              </button>
             </div>
 
             {/* Report Body */}
