@@ -25,7 +25,11 @@ const prioridadeColor: Record<string, string> = {
   "Alta": "bg-destructive/15 text-destructive border-destructive/30",
 };
 
-export default function AcoesTable() {
+interface AcoesTableProps {
+  isAdmin?: boolean;
+}
+
+export default function AcoesTable({ isAdmin = false }: AcoesTableProps) {
   const { data: acoes, isLoading } = useAcoes();
   const deleteMutation = useDeleteAcao();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -130,23 +134,25 @@ export default function AcoesTable() {
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(a)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir ação?</AlertDialogTitle>
-                            <AlertDialogDescription>Esta ação será permanentemente removida.</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(a.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      {isAdmin && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir ação?</AlertDialogTitle>
+                              <AlertDialogDescription>Esta ação será permanentemente removida.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(a.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
