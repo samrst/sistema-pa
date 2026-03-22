@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, TableProperties, ClipboardCheck, BrainCircuit, ShieldCheck, LogOut } from "lucide-react";
+import { LayoutDashboard, TableProperties, ClipboardCheck, BrainCircuit, ShieldCheck, LogOut, MessageSquare } from "lucide-react";
 import AcoesTable from "@/components/AcoesTable";
 import DashboardView from "@/components/DashboardView";
 import ChecklistView from "@/components/ChecklistView";
