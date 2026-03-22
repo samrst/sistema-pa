@@ -64,7 +64,7 @@ export function exportRelatorioPdf(markdownContent: string, totalAcoes: number) 
   let y = 55;
 
   // Parse markdown into sections
-  const lines = markdownContent.split("\n");
+  const lines = cleaned.split("\n");
   let i = 0;
 
   while (i < lines.length) {
