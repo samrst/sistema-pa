@@ -63,6 +63,11 @@ const Index = () => {
             <TabsTrigger value="analise" className="gap-1.5">
               <BrainCircuit className="h-4 w-4" /> Análise IA
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="agente-admin" className="gap-1.5">
+                <MessageSquare className="h-4 w-4" /> Agente Admin
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="acoes">
