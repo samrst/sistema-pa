@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, TableProperties, ClipboardCheck, BrainCircuit, ShieldCheck, LogOut } from "lucide-react";
+import { LayoutDashboard, TableProperties, ClipboardCheck, BrainCircuit, ShieldCheck, LogOut, MessageSquare } from "lucide-react";
 import AcoesTable from "@/components/AcoesTable";
 import DashboardView from "@/components/DashboardView";
 import ChecklistView from "@/components/ChecklistView";
 import AnalistaGemini from "@/components/AnalistaGemini";
 import AdminLogin from "@/components/AdminLogin";
+import AdminChat from "@/components/AdminChat";
 import { useAcoes } from "@/hooks/useAcoes";
 import { Button } from "@/components/ui/button";
 
@@ -62,6 +63,11 @@ const Index = () => {
             <TabsTrigger value="analise" className="gap-1.5">
               <BrainCircuit className="h-4 w-4" /> Análise IA
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="agente-admin" className="gap-1.5">
+                <MessageSquare className="h-4 w-4" /> Agente Admin
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="acoes">
@@ -76,6 +82,11 @@ const Index = () => {
           <TabsContent value="analise">
             <AnalistaGemini dadosAcoes={acoes || []} />
           </TabsContent>
+          {isAdmin && (
+            <TabsContent value="agente-admin">
+              <AdminChat />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
 
