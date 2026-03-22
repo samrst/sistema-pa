@@ -6,6 +6,7 @@ import DashboardView from "@/components/DashboardView";
 import ChecklistView from "@/components/ChecklistView";
 import AnalistaGemini from "@/components/AnalistaGemini";
 import AdminLogin from "@/components/AdminLogin";
+import AdminChat from "@/components/AdminChat";
 import { useAcoes } from "@/hooks/useAcoes";
 import { Button } from "@/components/ui/button";
 
