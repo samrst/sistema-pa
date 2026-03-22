@@ -82,6 +82,11 @@ const Index = () => {
           <TabsContent value="analise">
             <AnalistaGemini dadosAcoes={acoes || []} />
           </TabsContent>
+          {isAdmin && (
+            <TabsContent value="agente-admin">
+              <AdminChat />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
 
