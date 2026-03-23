@@ -1,4 +1,6 @@
 export const CURSOS = [
+  "Escola",
+  "Semi Presencial",
   "Técnico em Eletromecânica",
   "Técnico em Manutenção Automotiva",
   "Técnico em Eletrotécnica",
