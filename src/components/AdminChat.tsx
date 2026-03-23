@@ -16,7 +16,6 @@ const SUGGESTIONS = [
   "Com base nas falhas encontradas, aplique o 5W2H para estruturar as causas raízes e sugestões de correção.",
   "Converta as fragilidades do plano de ação em Metas SMART focadas na melhoria do desempenho da unidade.",
   "Com base nos dados dos planos de ação, identifique: as ações propostas atacam diretamente as capacidades técnicas onde houve menor desempenho, ou são ações genéricas de revisão? Liste as principais inconsistências entre o indicador de falha e a solução proposta",
-  "Acesse a base de dados de planos de ação do SAEP e liste todos os cursos disponíveis para seleção. Após eu escolher o curso, realize um cruzamento de dados entre as ações propostas pelos docentes e os critérios das metodologias SMART e 5W2H.", 
   "Identifique inconsistências operacionais, falhas de planejamento e mensure o nível de exequibilidade das metas apresentadas.",
 ];
 
