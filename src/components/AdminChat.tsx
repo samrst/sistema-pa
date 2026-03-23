@@ -12,10 +12,11 @@ type AttachedFile = { name: string; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-admin`;
 
 const SUGGESTIONS = [
-  "Analise as ações cadastradas e identifique os 3 principais pontos críticos que devo abordar com os coordenadores.",
-  "Elabore um e-mail para os coordenadores cobrando o preenchimento do plano de ações SAEP.",
-  "Quais perguntas estratégicas devo fazer na próxima reunião de acompanhamento pedagógico?",
-  "Crie uma pauta de reunião para discutir os resultados do SAEP com os coordenadores.",
+  "Analise os indicadores do SAEP e identifique fragilidades críticas e 3 pontos de consistência",
+  "Com base nas falhas encontradas, aplique o 5W2H para estruturar as causas raízes e sugestões de correção.",
+  "Com base nas falhas encontradas, aplique o 5W2H para estruturar as causas raízes e sugestões de correção.",
+  "Converta as fragilidades do plano de ação em Metas SMART focadas na melhoria do desempenho da unidade.",
+  "Com base nos dados do SAEPE e nos planos dos docentes, identifique: as ações propostas atacam diretamente as capacidades técnicas onde houve menor desempenho, ou são ações genéricas de revisão? Liste as principais inconsistências entre o indicador de falha e a solução proposta",
 ];
 
 function readFileAsText(file: File): Promise<string> {
