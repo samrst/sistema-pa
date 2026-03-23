@@ -2,6 +2,7 @@ export const CURSOS = [
   "Técnico em Eletromecânica",
   "Técnico em Manutenção Automotiva",
   "Técnico em Eletrotécnica",
+  "Técnico em Edificações,
   "Técnico em Logística",
   "Técnico em Administração",
   "Técnico em Desenvolvimento de Sistemas",
