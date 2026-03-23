@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import ReactMarkdown from "react-markdown";
 import { useAcoes } from "@/hooks/useAcoes";
+import AdminChatActions from "@/components/AdminChatActions";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type AttachedFile = { name: string; content: string };
