@@ -295,8 +295,11 @@ const AdminChat = () => {
                 }`}
               >
                 {m.role === "assistant" ? (
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                  <div>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <ReactMarkdown>{m.content}</ReactMarkdown>
+                    </div>
+                    {!isLoading && m.content && <AdminChatActions content={m.content} />}
                   </div>
                 ) : (
                   <p className="whitespace-pre-wrap">{m.content}</p>
