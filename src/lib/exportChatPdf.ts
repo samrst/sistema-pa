@@ -103,15 +103,9 @@ export function exportChatResponsePdf(content: string) {
     } else if (trimmed.startsWith("|")) {
       // Collect full table
       const tableLines: string[] = [];
-      let tIdx = lines.indexOf(line);
-      while (tIdx < lines.length && lines[tIdx].trim().startsWith("|")) {
-        tableLines.push(lines[tIdx].trim());
-        tIdx++;
-      }
-      // Skip already-processed table lines
-      const remaining = tableLines.length - 1;
-      for (let sk = 0; sk < remaining; sk++) {
-        lines.splice(lines.indexOf(line) + 1, 0, "__SKIP__");
+      while (lineIdx < lines.length && lines[lineIdx].trim().startsWith("|")) {
+        tableLines.push(lines[lineIdx].trim());
+        lineIdx++;
       }
 
       // Parse table
@@ -151,7 +145,6 @@ export function exportChatResponsePdf(content: string) {
           const x = marginLeft + ci * colWidth + cellPad;
           doc.text(cell.substring(0, Math.floor(colWidth / 1.8)), x, y);
         });
-        // Header borders
         doc.setDrawColor(0, 70, 130);
         doc.setLineWidth(0.2);
         for (let ci = 0; ci <= numCols; ci++) {
@@ -170,7 +163,6 @@ export function exportChatResponsePdf(content: string) {
             doc.addPage();
             y = 15;
           }
-          // Alternating row bg
           if (ri % 2 === 0) {
             doc.setFillColor(245, 247, 250);
           } else {
@@ -178,7 +170,6 @@ export function exportChatResponsePdf(content: string) {
           }
           doc.rect(marginLeft, y - 4, maxWidth, rowH, "F");
 
-          // Cell borders
           doc.setDrawColor(200, 210, 220);
           doc.setLineWidth(0.15);
           for (let ci = 0; ci <= numCols; ci++) {
@@ -187,7 +178,6 @@ export function exportChatResponsePdf(content: string) {
           }
           doc.line(marginLeft, y - 4 + rowH, marginLeft + maxWidth, y - 4 + rowH);
 
-          // Cell text
           doc.setTextColor(30, 30, 30);
           row.forEach((cell, ci) => {
             const x = marginLeft + ci * colWidth + cellPad;
