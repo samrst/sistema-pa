@@ -59,7 +59,9 @@ export function exportChatResponsePdf(content: string) {
   const cleanContent = stripEmojis(content);
   const lines = cleanContent.split("\n");
 
-  for (const line of lines) {
+  let lineIdx = 0;
+  while (lineIdx < lines.length) {
+    const line = lines[lineIdx];
     if (y > pageHeight - 20) {
       doc.addPage();
       y = 15;
