@@ -201,6 +201,7 @@ export function exportChatResponsePdf(content: string) {
       doc.text(wrapped, marginLeft, y);
       y += wrapped.length * 4.5 + 1.5;
     }
+    lineIdx++;
   }
 
   // Footer on each page
