@@ -12,11 +12,10 @@ type AttachedFile = { name: string; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-admin`;
 
 const SUGGESTIONS = [
-  "Analise os planos de ação e identifique fragilidades críticas e pontos de consistência",
-  "Com base nas falhas encontradas, aplique o 5W2H para estruturar as causas raízes e sugestões de correção.",
-  "Converta as fragilidades do plano de ação em Metas SMART focadas na melhoria do desempenho da unidade.",
-  "Com base nos dados dos planos de ação, identifique: as ações propostas atacam diretamente as capacidades técnicas onde houve menor desempenho, ou são ações genéricas de revisão? Liste as principais inconsistências entre o indicador de falha e a solução proposta",
-  "Identifique inconsistências operacionais, falhas de planejamento e mensure o nível de exequibilidade das metas apresentadas.",
+  "Quais ações cadastradas ainda não foram iniciadas e quais cursos concentram a maior quantidade dessas ações?",
+  "Quais ações estão relacionadas à padronização de materiais e metodologias e qual o status de execução dessas ações?",
+ "Quais são as ações relacionadas a reforço de competências básicas (leitura e matemática) e em quais cursos elas estão sendo aplicadas?",
+  
 ];
 
 function readFileAsText(file: File): Promise<string> {
