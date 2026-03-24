@@ -298,7 +298,7 @@ const AdminChat = () => {
                 {m.role === "assistant" ? (
                   <div>
                     <div className="relatorio-ia prose prose-sm max-w-none dark:prose-invert">
-                      <ReactMarkdown>{m.content}</ReactMarkdown>
+                      <ReactMarkdown components={markdownComponents}>{m.content}</ReactMarkdown>
                     </div>
                     {!isLoading && m.content && <AdminChatActions content={m.content} />}
                   </div>
