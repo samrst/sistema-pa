@@ -59,7 +59,9 @@ export function exportChatResponsePdf(content: string) {
   const cleanContent = stripEmojis(content);
   const lines = cleanContent.split("\n");
 
-  for (const line of lines) {
+  let lineIdx = 0;
+  while (lineIdx < lines.length) {
+    const line = lines[lineIdx];
     if (y > pageHeight - 20) {
       doc.addPage();
       y = 15;
@@ -99,37 +101,95 @@ export function exportChatResponsePdf(content: string) {
       doc.text(wrapped, marginLeft + 7, y);
       y += wrapped.length * 4.5 + 1.5;
     } else if (trimmed.startsWith("|")) {
-      // Table row
-      const cells = trimmed.split("|").filter((c) => c.trim() !== "");
-      if (cells.some((c) => /^[-:]+$/.test(c.trim()))) continue; // separator
-      const isHeader = lines[lines.indexOf(line) + 1]?.trim().startsWith("|") &&
-        lines[lines.indexOf(line) + 1]?.includes("---");
-
-      const colWidth = maxWidth / Math.max(cells.length, 1);
-
-      if (isHeader) {
-        doc.setFillColor(0, 90, 156);
-        doc.rect(marginLeft, y - 3.5, maxWidth, 6, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-      } else {
-        const rowIdx = lines.slice(0, lines.indexOf(line)).filter((l) => l.trim().startsWith("|") && !l.includes("---")).length;
-        if (rowIdx % 2 === 0) {
-          doc.setFillColor(240, 245, 250);
-          doc.rect(marginLeft, y - 3.5, maxWidth, 6, "F");
-        }
-        doc.setTextColor(30, 30, 30);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
+      // Collect full table
+      const tableLines: string[] = [];
+      while (lineIdx < lines.length && lines[lineIdx].trim().startsWith("|")) {
+        tableLines.push(lines[lineIdx].trim());
+        lineIdx++;
       }
 
-      cells.forEach((cell, ci) => {
-        const x = marginLeft + ci * colWidth + 1;
-        const cleanCell = cell.trim().replace(/\*\*/g, "");
-        doc.text(cleanCell.substring(0, Math.floor(colWidth / 2)), x, y);
-      });
-      y += 6;
+      // Parse table
+      const dataRows: string[][] = [];
+      let headerRow: string[] | null = null;
+      for (let ti = 0; ti < tableLines.length; ti++) {
+        const cells = tableLines[ti].split("|").filter((c) => c.trim() !== "");
+        if (cells.some((c) => /^[-:]+$/.test(c.trim()))) continue;
+        const cleaned = cells.map((c) => c.trim().replace(/\*\*/g, ""));
+        if (!headerRow) {
+          headerRow = cleaned;
+        } else {
+          dataRows.push(cleaned);
+        }
+      }
+
+      if (headerRow) {
+        const numCols = headerRow.length;
+        const colWidth = maxWidth / numCols;
+        const rowH = 7;
+        const cellPad = 2;
+
+        // Check page space
+        const tableHeight = (dataRows.length + 1) * rowH + 4;
+        if (y + tableHeight > pageHeight - 20) {
+          doc.addPage();
+          y = 15;
+        }
+
+        // Draw header
+        doc.setFillColor(0, 90, 156);
+        doc.rect(marginLeft, y - 4, maxWidth, rowH, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7.5);
+        headerRow.forEach((cell, ci) => {
+          const x = marginLeft + ci * colWidth + cellPad;
+          doc.text(cell.substring(0, Math.floor(colWidth / 1.8)), x, y);
+        });
+        doc.setDrawColor(0, 70, 130);
+        doc.setLineWidth(0.2);
+        for (let ci = 0; ci <= numCols; ci++) {
+          const x = marginLeft + ci * colWidth;
+          doc.line(x, y - 4, x, y - 4 + rowH);
+        }
+        doc.line(marginLeft, y - 4, marginLeft + maxWidth, y - 4);
+        doc.line(marginLeft, y - 4 + rowH, marginLeft + maxWidth, y - 4 + rowH);
+        y += rowH;
+
+        // Draw data rows
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        dataRows.forEach((row, ri) => {
+          if (y + rowH > pageHeight - 20) {
+            doc.addPage();
+            y = 15;
+          }
+          if (ri % 2 === 0) {
+            doc.setFillColor(245, 247, 250);
+          } else {
+            doc.setFillColor(255, 255, 255);
+          }
+          doc.rect(marginLeft, y - 4, maxWidth, rowH, "F");
+
+          doc.setDrawColor(200, 210, 220);
+          doc.setLineWidth(0.15);
+          for (let ci = 0; ci <= numCols; ci++) {
+            const x = marginLeft + ci * colWidth;
+            doc.line(x, y - 4, x, y - 4 + rowH);
+          }
+          doc.line(marginLeft, y - 4 + rowH, marginLeft + maxWidth, y - 4 + rowH);
+
+          doc.setTextColor(30, 30, 30);
+          row.forEach((cell, ci) => {
+            const x = marginLeft + ci * colWidth + cellPad;
+            const maxChars = Math.floor((colWidth - cellPad * 2) / 1.8);
+            doc.text(cell.substring(0, maxChars), x, y);
+          });
+          y += rowH;
+        });
+
+        y += 3;
+      }
+      continue;
     } else if (trimmed === "") {
       y += 3;
     } else {
@@ -141,6 +201,7 @@ export function exportChatResponsePdf(content: string) {
       doc.text(wrapped, marginLeft, y);
       y += wrapped.length * 4.5 + 1.5;
     }
+    lineIdx++;
   }
 
   // Footer on each page
