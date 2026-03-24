@@ -133,75 +133,117 @@
   background: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
 }
 
-/* Table Styles — Excel-like clean grid */
-.relatorio-ia .prose table {
-  @apply w-full text-xs my-4;
-  border-collapse: collapse;
-  border: 2px solid hsl(var(--primary) / 0.3);
-  border-radius: 0;
-}
-
-.relatorio-ia .prose thead {
-  background: hsl(var(--primary));
-}
-
-.relatorio-ia .prose thead th {
-  @apply px-3 py-2.5 text-left font-semibold text-[11px] tracking-wide;
-  color: hsl(var(--primary-foreground));
-  border: 1px solid hsl(var(--primary) / 0.6);
-  white-space: nowrap;
-}
-
-.relatorio-ia .prose tbody tr {
-  transition: background 0.15s ease;
-}
-
-.relatorio-ia .prose tbody tr:nth-child(odd) {
-  background: hsl(0 0% 100%);
-}
-
-.relatorio-ia .prose tbody tr:nth-child(even) {
-  background: hsl(var(--primary) / 0.04);
-}
-
-.relatorio-ia .prose tbody tr:hover {
-  background: hsl(var(--primary) / 0.08);
-}
-
-.relatorio-ia .prose tbody td {
-  @apply px-3 py-2 text-foreground/90 text-xs;
-  border: 1px solid hsl(var(--border));
-  vertical-align: top;
-  line-height: 1.5;
-}
-
-/* Responsive table scroll */
-.relatorio-ia .table-scroll-wrapper {
+/* ─── Excel-like Table System ─── */
+.relatorio-table-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   margin: 1rem 0;
-  border: 2px solid hsl(var(--primary) / 0.3);
-  border-radius: 6px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px hsl(var(--foreground) / 0.08), 0 0 0 1px hsl(var(--border));
 }
 
-.relatorio-ia .table-scroll-wrapper table {
-  border: none;
+.relatorio-ia .prose table,
+.relatorio-table-wrapper table {
+  @apply w-full text-xs;
+  border-collapse: collapse;
   margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.relatorio-ia .prose thead,
+.relatorio-table-wrapper thead {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(215 70% 38%));
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.relatorio-ia .prose thead th,
+.relatorio-table-wrapper thead th {
+  @apply px-3 py-2.5 text-left font-bold text-[11px] uppercase tracking-wider;
+  color: hsl(var(--primary-foreground));
+  border-right: 1px solid hsl(var(--primary-foreground) / 0.15);
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+}
+
+.relatorio-ia .prose thead th:last-child,
+.relatorio-table-wrapper thead th:last-child {
+  border-right: none;
+}
+
+.relatorio-ia .prose tbody tr,
+.relatorio-table-wrapper tbody tr {
+  transition: background 0.12s ease;
+}
+
+.relatorio-ia .prose tbody tr:nth-child(odd),
+.relatorio-table-wrapper tbody tr:nth-child(odd) {
+  background: hsl(0 0% 100%);
+}
+
+.relatorio-ia .prose tbody tr:nth-child(even),
+.relatorio-table-wrapper tbody tr:nth-child(even) {
+  background: hsl(var(--primary) / 0.03);
+}
+
+.relatorio-ia .prose tbody tr:hover,
+.relatorio-table-wrapper tbody tr:hover {
+  background: hsl(var(--primary) / 0.07);
+}
+
+.relatorio-ia .prose tbody td,
+.relatorio-table-wrapper tbody td {
+  @apply px-3 py-2 text-foreground/90 text-xs;
+  border-right: 1px solid hsl(var(--border) / 0.6);
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+.relatorio-ia .prose tbody td:last-child,
+.relatorio-table-wrapper tbody td:last-child {
+  border-right: none;
+}
+
+/* Status badges */
+.status-badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap;
+}
+.status-done {
+  background: hsl(var(--success) / 0.12);
+  color: hsl(var(--success));
+}
+.status-progress {
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+}
+.status-pending {
+  background: hsl(var(--warning) / 0.12);
+  color: hsl(38 92% 40%);
+}
+.status-critical {
+  background: hsl(var(--destructive) / 0.12);
+  color: hsl(var(--destructive));
 }
 
 @media (max-width: 640px) {
   .relatorio-ia .prose thead th,
-  .relatorio-ia .prose tbody td {
+  .relatorio-ia .prose tbody td,
+  .relatorio-table-wrapper thead th,
+  .relatorio-table-wrapper tbody td {
     @apply px-2 py-1.5 text-[10px];
-    min-width: 80px;
+    min-width: 70px;
   }
 }
 
-.dark .relatorio-ia .prose tbody tr:nth-child(odd) {
+.dark .relatorio-ia .prose tbody tr:nth-child(odd),
+.dark .relatorio-table-wrapper tbody tr:nth-child(odd) {
   background: hsl(var(--card));
 }
 
-.dark .relatorio-ia .prose tbody tr:nth-child(even) {
+.dark .relatorio-ia .prose tbody tr:nth-child(even),
+.dark .relatorio-table-wrapper tbody tr:nth-child(even) {
   background: hsl(var(--muted) / 0.3);
 }
 
