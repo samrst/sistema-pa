@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import ReactMarkdown from "react-markdown";
 import { useAcoes } from "@/hooks/useAcoes";
 import AdminChatActions from "@/components/AdminChatActions";
+import { markdownComponents } from "@/components/MarkdownRenderers";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type AttachedFile = { name: string; content: string };
@@ -297,7 +298,7 @@ const AdminChat = () => {
                 {m.role === "assistant" ? (
                   <div>
                     <div className="relatorio-ia prose prose-sm max-w-none dark:prose-invert">
-                      <ReactMarkdown>{m.content}</ReactMarkdown>
+                      <ReactMarkdown components={markdownComponents}>{m.content}</ReactMarkdown>
                     </div>
                     {!isLoading && m.content && <AdminChatActions content={m.content} />}
                   </div>

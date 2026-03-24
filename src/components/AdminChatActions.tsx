@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { FileDown, Mail, X } from "lucide-react";
+import { FileDown, Mail, X, Sheet, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { exportChatResponsePdf, getChatResponsePlainText } from "@/lib/exportChatPdf";
+import { exportChatCsv, exportChatXlsxHtml } from "@/lib/exportChatCsv";
 import { toast } from "sonner";
 
 interface AdminChatActionsProps {
@@ -23,6 +24,24 @@ const AdminChatActions: React.FC<AdminChatActionsProps> = ({ content }) => {
     }
   };
 
+  const handleExportCsv = () => {
+    try {
+      exportChatCsv(content);
+      toast.success("CSV exportado com sucesso!");
+    } catch {
+      toast.error("Nenhuma tabela encontrada para exportar.");
+    }
+  };
+
+  const handleExportExcel = () => {
+    try {
+      exportChatXlsxHtml(content);
+      toast.success("Excel exportado com sucesso!");
+    } catch {
+      toast.error("Nenhuma tabela encontrada para exportar.");
+    }
+  };
+
   const handleSendEmail = () => {
     if (!email.trim()) {
       toast.error("Informe o endereço de e-mail.");
@@ -37,24 +56,46 @@ const AdminChatActions: React.FC<AdminChatActionsProps> = ({ content }) => {
     setEmail("");
   };
 
+  const hasTable = content.includes("|");
+
   return (
-    <div className="mt-2 space-y-2">
-      <div className="flex gap-2 flex-wrap">
+    <div className="mt-3 space-y-2">
+      <div className="flex gap-1.5 flex-wrap">
         <Button
           variant="outline"
           size="sm"
-          className="text-xs gap-1.5 h-7 rounded-lg border-primary/20 text-primary hover:bg-primary/5"
+          className="text-[11px] gap-1.5 h-7 rounded-lg border-primary/20 text-primary hover:bg-primary/5"
           onClick={handleExportPdf}
         >
-          <FileDown size={13} /> Exportar PDF
+          <FileDown size={12} /> PDF
         </Button>
+        {hasTable && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[11px] gap-1.5 h-7 rounded-lg border-primary/20 text-primary hover:bg-primary/5"
+              onClick={handleExportCsv}
+            >
+              <Sheet size={12} /> CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[11px] gap-1.5 h-7 rounded-lg border-primary/20 text-primary hover:bg-primary/5"
+              onClick={handleExportExcel}
+            >
+              <FileSpreadsheet size={12} /> Excel
+            </Button>
+          </>
+        )}
         <Button
           variant="outline"
           size="sm"
-          className="text-xs gap-1.5 h-7 rounded-lg border-primary/20 text-primary hover:bg-primary/5"
+          className="text-[11px] gap-1.5 h-7 rounded-lg border-primary/20 text-primary hover:bg-primary/5"
           onClick={() => setShowEmailForm(!showEmailForm)}
         >
-          <Mail size={13} /> Enviar por E-mail
+          <Mail size={12} /> E-mail
         </Button>
       </div>
 
@@ -66,20 +107,8 @@ const AdminChatActions: React.FC<AdminChatActionsProps> = ({ content }) => {
               <X size={14} />
             </button>
           </div>
-          <Input
-            type="email"
-            placeholder="Endereço de e-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-8 text-xs"
-          />
-          <Input
-            type="text"
-            placeholder="Assunto"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="h-8 text-xs"
-          />
+          <Input type="email" placeholder="Endereço de e-mail" value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 text-xs" />
+          <Input type="text" placeholder="Assunto" value={subject} onChange={(e) => setSubject(e.target.value)} className="h-8 text-xs" />
           <Button size="sm" className="w-full h-8 text-xs gap-1.5" onClick={handleSendEmail}>
             <Mail size={13} /> Enviar
           </Button>
