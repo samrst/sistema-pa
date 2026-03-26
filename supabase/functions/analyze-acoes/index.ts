@@ -47,15 +47,6 @@ Selecione as ações mais sensíveis e aplique a consultoria:
 
 DADOS PARA ANÁLISE:
 ${JSON.stringify(acoes, null, 2)}`;
-
-
-
-
-
-
-
-
-
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
@@ -156,6 +147,98 @@ Escreva 3 parágrafos curtos sobre a maturidade estratégica geral deste plano d
         temperature: 0.2, // Baixa temperatura para manter a análise técnica e menos "criativa"
       }),
     });
+
+
+
+
+
+
+
+
+
+
+
+const systemPrompt = `Você é um Consultor Estratégico Sênior do SENAI. 
+Sua resposta deve ser um RELATÓRIO EXECUTIVO com ESPAÇAMENTO AMPLO.
+
+REGRAS DE FORMATAÇÃO VISUAL (OBRIGATÓRIAS):
+1. PULE DUAS LINHAS entre cada seção e entre cada item de análise.
+2. NUNCA use tabelas Markdown (|---|).
+3. Use LINHAS DIVISORAS LONGAS para criar separação visual clara.
+4. Use RECUOS (espaços em branco) para hierarquizar as informações.
+5. Use emojis apenas como marcadores: 🔴, 🟡, 🟢.`;
+
+    const userPrompt = `Analise as ${acoes.length} ações do plano SAEP e gere o relatório com o máximo de clareza visual. 
+
+DADOS PARA ANÁLISE:
+${JSON.stringify(acoes, null, 2)}
+
+ESTRUTURE O TEXTO EXATAMENTE ASSIM (RESPEITANDO OS ESPAÇOS):
+
+══════════════════════════════════════════════════
+📊  DIAGNÓSTICO ESTRATÉGICO DO PLANO
+══════════════════════════════════════════════════
+
+
+[Escreva o resumo executivo aqui com 4 linhas]
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍  CRUZAMENTO DE DADOS E SINERGIAS (PONTOS EM COMUM)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+• PADRÃO IDENTIFICADO: [Nome do Padrão]
+
+• CURSOS ENVOLVIDOS: [Lista de Cursos]
+
+• ANÁLISE TÉCNICA: [Por que unificar e qual o ganho?]
+
+
+(Pule duas linhas antes do próximo padrão)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯  ANÁLISE DE VIABILIDADE E MELHORIAS POR AÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+• AÇÃO: [Nome]
+
+• STATUS: 🔴/🟡/🟢
+
+• CRÍTICA DO CONSULTOR: [Análise técnica]
+
+• PROPOSTA DE MELHORIA: [Sugestão estratégica]
+
+
+(Pule duas linhas antes da próxima ação)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡  RECOMENDAÇÕES FINAIS (PRÓXIMOS PASSOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+1. [Recomendação 1] - Prioridade Máxima
+
+2. [Recomendação 2] - Prioridade Média
+
+
+══════════════════════════════════════════════════
+FIM DO RELATÓRIO DE CONSULTORIA
+══════════════════════════════════════════════════`;
+
+
+
+
+
+
+
+
+
+
+
 
     if (!response.ok) {
       const text = await response.text();
