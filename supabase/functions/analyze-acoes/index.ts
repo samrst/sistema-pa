@@ -122,4 +122,56 @@ Escreva 3 parágrafos curtos sobre a maturidade estratégica geral deste plano d
     });
   }
 });
+
+
+const systemPrompt = `Você é um Consultor Estratégico Sênior. 
+Sua resposta deve ser extremamente organizada visualmente, fácil de ler em qualquer tela.
+
+REGRAS DE FORMATAÇÃO VISUAL:
+1. USE TÍTULOS EM CAIXA ALTA para seções (ex: === ANÁLISE DE VIABILIDADE ===).
+2. USE ESPAÇAMENTOS: Deixe uma linha em branco entre cada item.
+3. USE MARCADORES VISUAIS: Em vez de tabelas complexas, use blocos de texto estruturados.
+4. EMOJIS: Use 🚩 para riscos, 💎 para oportunidades e 📈 para tendências.
+5. NÃO USE barras verticais (|) ou tabelas Markdown complexas.`;
+
+    const userPrompt = `Analise as ações SAEP abaixo e gere um RELATÓRIO EXECUTIVO ESTRATÉGICO.
+
+DADOS: ${JSON.stringify(acoes)}
+
+ESTRUTURE O TEXTO EXATAMENTE ASSIM:
+
+==================================================
+📊 DIAGNÓSTICO GERAL DA GESTÃO
+==================================================
+(Escreva aqui um resumo de 3 linhas sobre a saúde do plano)
+
+--------------------------------------------------
+🔍 CRUZAMENTO DE DADOS (PONTOS EM COMUM)
+--------------------------------------------------
+• PADRÃO IDENTIFICADO: [Nome]
+• CURSOS: [Listar cursos]
+• SUGESTÃO: [Sugestão de unificação]
+
+(Repita para cada padrão)
+
+--------------------------------------------------
+🎯 ANÁLISE DE VIABILIDADE E MELHORIAS
+--------------------------------------------------
+AÇÃO: [Nome da Ação]
+CURSO: [Nome]
+VIABILIDADE: 🟢 Alta / 🟡 Média / 🔴 Baixa
+POR QUE: [Explicação curta]
+MELHORIA SUGERIDA: [Sugestão técnica]
+
+--------------------------------------------------
+💡 RECOMENDAÇÕES FINAIS (PRÓXIMOS PASSOS)
+--------------------------------------------------
+1. [Recomendação 1] - Urgência: Máxima
+2. [Recomendação 2] - Urgência: Média
+`;
+
+
+
+
+
 });
