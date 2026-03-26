@@ -18,11 +18,13 @@ const CURSOS_CADASTRADOS = [
 ];
 
 serve(async (req) => {
+  serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { acoes } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     if (!acoes || acoes.length === 0) {
@@ -34,153 +36,55 @@ serve(async (req) => {
 
     const hoje = new Date().toISOString().slice(0, 10);
 
-    // Identify courses with no actions
-    const cursosComAcoes = [...new Set(acoes.map((a: any) => a.curso))];
-    const cursosSemAcoes = CURSOS_CADASTRADOS.filter(c => !cursosComAcoes.includes(c));
+    // Configuração do Agente Estratégico
+    const systemPrompt = `Você é um Consultor de Gestão Estratégica e Especialista em Eficiência Operacional Educacional (SENAI).
+Sua missão é realizar uma auditoria técnica e estratégica sobre os planos de ação do SAEP.
 
-    const systemPrompt = `Você é um consultor executivo sênior de gestão educacional do SENAI, especialista em análise estratégica de planos de ação SAEP.
-Seu público são gerentes e diretores que precisam de uma visão clara, visual e acionável.
+DIRETRIZES DE ANÁLISE:
+1. CRUZAMENTO DE DADOS: Identifique ações redundantes entre cursos diferentes e sugira unificação para economizar recursos.
+2. VIABILIDADE TÉCNICA: Avalie se o prazo final é realista para o tipo de ação e o custo estimado.
+3. GESTÃO ESTRATÉGICA: Aplique conceitos de análise de risco e melhoria contínua (PDCA).
+4. FOCO EM RESULTADO: Identifique descrições vagas e proponha indicadores de desempenho (KPIs) claros.
 
-REGRAS OBRIGATÓRIAS DE FORMATAÇÃO:
-- Use EXCLUSIVAMENTE tabelas Markdown para apresentar dados (| col1 | col2 |).
-- NUNCA use listas com traços (- item) para dados tabulares. SEMPRE tabelas.
-- Cada seção DEVE ter uma tabela quando houver dados.
-- Seja direto — frases curtas e objetivas.
-- Use emojis como sinalizadores visuais: 🔴 crítico, 🟡 atenção, 🟢 ok, ⚠️ alerta, ✅ concluído, 📊 dados.
-- Data de hoje: ${hoje}. Use para calcular atrasos.
-- Separe cada seção com --- (linha horizontal).`;
+REGRAS DE FORMATAÇÃO:
+- Use EXCLUSIVAMENTE tabelas Markdown para dados comparativos.
+- Use emojis para sinalização: 🔴 Crítico/Inviável, 🟡 Atenção/Ajustar, 🟢 Viável/Excelente.
+- Separe as seções com '---'.`;
 
-    const userPrompt = `Analise profundamente as ${acoes.length} ações SAEP cadastradas. Data de hoje: ${hoje}.
+    const userPrompt = `Realize uma Auditoria Estratégica profunda nas ${acoes.length} ações SAEP cadastradas. Data de referência: ${hoje}.
 
-DADOS DAS AÇÕES:
+DADOS DAS AÇÕES PARA CRUZAMENTO:
 ${JSON.stringify(acoes, null, 2)}
 
-CURSOS SEM NENHUMA AÇÃO CADASTRADA: ${cursosSemAcoes.length > 0 ? cursosSemAcoes.join(", ") : "Nenhum — todos os cursos possuem ações."}
-
-Gere o relatório executivo com EXATAMENTE estas seções, nesta ordem:
+Gere o relatório estruturado nos seguintes blocos:
 
 ---
-
-## 📊 VISÃO GERAL DO CENÁRIO
-
-Tabela-resumo com indicadores consolidados:
-
-| Indicador | Valor |
-|-----------|-------|
-| Total de ações cadastradas | X |
-| Ações concluídas | X (Y%) |
-| Ações em andamento | X (Y%) |
-| Ações não iniciadas | X (Y%) |
-| Ações com impeditivo | X (Y%) |
-| Ações atrasadas (prazo vencido) | X |
-| Cursos com ações cadastradas | X de 9 |
-| Cursos SEM ações | X |
-
-Escreva 2-3 frases de contexto sobre a situação geral.
+## 🔍 ANÁLISE DE VIABILIDADE E SAÚDE DO PLANO
+Analise se as ações são realistas (Prazo vs. Complexidade).
+| Ação | Curso | Análise de Viabilidade | Status de Saúde |
+|------|-------|------------------------|-----------------|
 
 ---
-
-## 🔗 PADRÕES EM COMUM ENTRE OS CURSOS
-
-Esta é a seção MAIS IMPORTANTE. Analise PROFUNDAMENTE o que os cursos têm em comum.
-
-Para cada padrão encontrado, crie uma subtabela:
-
-**Padrão: [Nome do padrão identificado]**
-
-| Curso | Ação relacionada | Capacidade SAEP | Status |
-|-------|-----------------|-----------------|--------|
-| ... | ... | ... | ... |
-
-Depois de cada tabela, escreva 1-2 frases explicando POR QUE esse padrão é relevante para a gestão.
-
-Identifique pelo menos:
-- Problemas/dores que aparecem em mais de um curso
-- Ações de mesmo tipo repetidas entre cursos
-- Capacidades SAEP que concentram mais problemas
-- Responsáveis que aparecem em múltiplos cursos
+## 🔗 CRUZAMENTO DE DADOS E SINERGIAS
+Identifique onde os cursos estão fazendo a mesma coisa e podem agir em conjunto.
+| Padrão Identificado | Cursos Envolvidos | Sugestão de Unificação/Ação Conjunta |
+|---------------------|-------------------|---------------------------------------|
 
 ---
-
-## 🎯 FOCO DAS AÇÕES: PARA ONDE ESTÃO OLHANDO?
-
-Classifique TODAS as ações por foco e apresente em tabela:
-
-| Foco | Quantidade | % do Total | Cursos envolvidos |
-|------|-----------|------------|-------------------|
-| 👨‍🏫 Capacitação Docente | X | Y% | ... |
-| 👨‍🎓 Desenvolvimento do Aluno | X | Y% | ... |
-| 📝 Avaliação/Instrumentos | X | Y% | ... |
-| 📚 Currículo/Metodologia | X | Y% | ... |
-| 🏗️ Infraestrutura/Material | X | Y% | ... |
-| 🤝 Parcerias/Gestão | X | Y% | ... |
-
-Analise: o foco está equilibrado? Há excesso em alguma área? Há lacunas?
+## 🎯 PONTOS DE MELHORIA E RECOMENDAÇÕES ESTRATÉGICAS
+Proponha ajustes baseados em boas práticas de gestão.
+| Ação Original | O que melhorar? | Sugestão do Consultor (Como fazer melhor) | Impacto Esperado |
+|---------------|-----------------|-------------------------------------------|------------------|
 
 ---
-
-## 🔴 AÇÕES CRÍTICAS E SENSÍVEIS
-
-Tabela com TODAS as ações de criticidade "Crítico" ou risco "Alto" ou prioridade "Alta":
-
-| Curso | Ação | Criticidade | Risco | Prioridade | Status | Prazo | Situação |
-|-------|------|------------|-------|-----------|--------|-------|----------|
-
-Onde "Situação" deve ser:
-- 🔴 ATRASADA (data_fim < hoje e status ≠ Concluído)
-- 🟡 PRAZO PRÓXIMO (até 7 dias)
-- 🟢 NO PRAZO
-- ⚠️ SEM PRAZO DEFINIDO
+## ⚠️ ALERTAS DE RISCO OPERACIONAL
+Indique o que pode impedir o sucesso do plano se nada for feito.
+| Risco Identificado | Cursos Afetados | Ação de Mitigação Sugerida | Urgência |
+|--------------------|-----------------|----------------------------|----------|
 
 ---
-
-## ⚠️ CURSOS SEM CADASTRO DE AÇÕES
-
-${cursosSemAcoes.length > 0 ? `Os seguintes cursos NÃO cadastraram nenhuma ação no plano SAEP:
-
-| Curso | Situação |
-|-------|----------|
-${cursosSemAcoes.map(c => `| ${c} | 🔴 Sem ações cadastradas |`).join("\n")}
-
-Explique por que isso é preocupante e o que a gestão deve fazer.` : "Todos os 9 cursos possuem ações cadastradas. ✅"}
-
----
-
-## 📋 PANORAMA INDIVIDUAL POR CURSO
-
-Para CADA curso que possui ações, crie uma mini-seção:
-
-### [Nome do Curso]
-
-| Ação | Tipo | Capacidade | Status | Risco | Prazo |
-|------|------|-----------|--------|-------|-------|
-| ... | ... | ... | ... | ... | ... |
-
-**Ponto de atenção:** [1 frase sobre o principal risco ou destaque deste curso]
-
----
-
-## 💡 RECOMENDAÇÕES ESTRATÉGICAS
-
-Baseado em TODA a análise acima, apresente:
-
-| # | Recomendação | Justificativa | Urgência |
-|---|-------------|---------------|----------|
-| 1 | ... | ... | 🔴 Alta / 🟡 Média / 🟢 Baixa |
-| 2 | ... | ... | ... |
-| 3 | ... | ... | ... |
-| 4 | ... | ... | ... |
-| 5 | ... | ... | ... |
-
-Inclua recomendações sobre:
-- Ações que podem ser unificadas entre cursos
-- Capacitações que beneficiariam múltiplas equipes
-- Cursos que precisam de atenção imediata
-- Riscos sistêmicos
-
----
-
-IMPORTANTE: Use APENAS tabelas Markdown para dados. Nunca use listas com traços para apresentar dados que caberiam em tabela. Mantenha frases analíticas curtas e diretas.`;
+## 💡 CONSIDERAÇÕES FINAIS DO CONSULTOR
+Escreva 3 parágrafos curtos sobre a maturidade estratégica geral deste plano de ação.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -189,30 +93,19 @@ IMPORTANTE: Use APENAS tabelas Markdown para dados. Nunca use listas com traços
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.0-flash", // Modelo eficiente e rápido
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
+        temperature: 0.2, // Baixa temperatura para manter a análise técnica e menos "criativa"
       }),
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns instantes." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA esgotados. Adicione créditos nas configurações." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const text = await response.text();
       console.error("AI gateway error:", response.status, text);
-      throw new Error("Erro no gateway de IA");
+      throw new Error("Erro na comunicação com o agente de IA");
     }
 
     const data = await response.json();
@@ -228,4 +121,5 @@ IMPORTANTE: Use APENAS tabelas Markdown para dados. Nunca use listas com traços
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+});
 });
