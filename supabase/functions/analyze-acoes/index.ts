@@ -1,6 +1,61 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
+
+const systemPrompt = `Você é um Consultor Estratégico Sênior do SENAI. 
+Sua resposta deve ser um RELATÓRIO EXECUTIVO LIMPO, sem o uso de tabelas Markdown (|---|).
+
+REGRAS DE FORMATAÇÃO VISUAL:
+1. Use LINHAS DIVISORAS para separar seções (ex: ════════════════════════).
+2. Use TÍTULOS EM CAIXA ALTA para facilitar a leitura rápida.
+3. Para dados comparativos, use o formato de LISTA ROTULADA (ex: • CURSO: Nome do Curso).
+4. Use ESPAÇAMENTO DUPLO entre blocos de informação para não poluir a visão.
+5. Use emojis apenas como marcadores de status: 🔴 (Crítico), 🟡 (Atenção), 🟢 (OK).`;
+
+    const userPrompt = `Analise as ${acoes.length} ações do plano SAEP e gere o relatório seguindo este layout:
+
+══════════════════════════════════════════════════
+📊 DIAGNÓSTICO ESTRATÉGICO DO PLANO
+══════════════════════════════════════════════════
+[Escreva aqui um resumo executivo de 4 linhas sobre a viabilidade geral das ações e saúde dos prazos]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 CRUZAMENTO DE DADOS E SINERGIAS (PONTOS EM COMUM)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Nesta seção, identifique quais cursos possuem ações que podem ser unificadas.
+
+• PADRÃO IDENTIFICADO: [Ex: Capacitação em Metodologias]
+• CURSOS ENVOLVIDOS: [Lista de Cursos]
+• ANÁLISE: [Por que unificar e qual o ganho de eficiência?]
+
+(Repita para cada padrão encontrado)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 ANÁLISE DE VIABILIDADE E MELHORIAS POR AÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Selecione as ações mais sensíveis e aplique a consultoria:
+
+• AÇÃO: [Nome]
+• STATUS: 🔴/🟡/🟢
+• CRÍTICA DO CONSULTOR: [Análise sobre prazo, custo e meta]
+• PROPOSTA DE MELHORIA: [Como tornar essa ação mais estratégica]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 RECOMENDAÇÕES FINAIS (PRÓXIMOS PASSOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Liste 3 a 5 recomendações prioritárias para a diretoria, com foco em gestão de curto e médio prazo]
+
+DADOS PARA ANÁLISE:
+${JSON.stringify(acoes, null, 2)}`;
+
+
+
+
+
+
+
+
+
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
