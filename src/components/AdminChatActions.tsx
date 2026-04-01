@@ -56,7 +56,7 @@ const AdminChatActions: React.FC<AdminChatActionsProps> = ({ content }) => {
     setEmail("");
   };
 
-  const hasTable = content.includes("|");
+  const hasTable = content.includes("<table");
 
   return (
     <div className="mt-3 space-y-2">
