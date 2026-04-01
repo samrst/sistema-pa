@@ -14,28 +14,78 @@ function strip(text: string): string {
     .trim();
 }
 
-/* ─── Parse markdown tables ─── */
-function parseTables(lines: string[], startIdx: number): { headers: string[]; rows: string[][]; endIdx: number } | null {
-  const tableLines: string[] = [];
-  let i = startIdx;
-  while (i < lines.length && lines[i].trim().startsWith("|")) {
-    tableLines.push(lines[i].trim());
-    i++;
+/* ─── Parse HTML tables from content ─── */
+function parseHtmlTables(html: string): { headers: string[]; rows: string[][] }[] {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${html}</div>`, "text/html");
+  const tables: { headers: string[]; rows: string[][] }[] = [];
+
+  doc.querySelectorAll("table").forEach(table => {
+    const headers: string[] = [];
+    table.querySelectorAll("thead th").forEach(th => {
+      headers.push((th.textContent || "").trim());
+    });
+
+    const rows: string[][] = [];
+    table.querySelectorAll("tbody tr").forEach(tr => {
+      const row: string[] = [];
+      tr.querySelectorAll("td").forEach(td => {
+        row.push((td.textContent || "").trim());
+      });
+      rows.push(row);
+    });
+
+    if (headers.length > 0 && rows.length > 0) {
+      tables.push({ headers, rows });
+    }
+  });
+
+  return tables;
+}
+
+/* ─── Extract plain text blocks from HTML ─── */
+function htmlToBlocks(html: string): { type: string; text: string; level?: number }[] {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${html}</div>`, "text/html");
+  const blocks: { type: string; text: string; level?: number }[] = [];
+  const root = doc.querySelector("div")!;
+
+  function walk(node: Element) {
+    for (const child of Array.from(node.children)) {
+      const tag = child.tagName.toLowerCase();
+
+      if (tag === "table") {
+        blocks.push({ type: "table-placeholder", text: "" });
+        continue;
+      }
+
+      if (tag === "h2") {
+        blocks.push({ type: "heading", text: (child.textContent || "").trim(), level: 2 });
+      } else if (tag === "h3") {
+        blocks.push({ type: "heading", text: (child.textContent || "").trim(), level: 3 });
+      } else if (tag === "h4") {
+        blocks.push({ type: "heading", text: (child.textContent || "").trim(), level: 4 });
+      } else if (tag === "p") {
+        const text = (child.textContent || "").trim();
+        if (text) blocks.push({ type: "paragraph", text });
+      } else if (tag === "ul" || tag === "ol") {
+        child.querySelectorAll("li").forEach(li => {
+          blocks.push({ type: tag === "ol" ? "numbered" : "bullet", text: (li.textContent || "").trim() });
+        });
+      } else if (tag === "div") {
+        if (child.classList.contains("alert-critical") || child.classList.contains("alert-success") || child.classList.contains("alert-info")) {
+          blocks.push({ type: "alert", text: (child.textContent || "").trim() });
+        } else {
+          walk(child);
+        }
+      } else if (tag === "section") {
+        walk(child);
+      }
+    }
   }
-  if (tableLines.length < 2) return null;
 
-  let headers: string[] | null = null;
-  const rows: string[][] = [];
-
-  for (const tl of tableLines) {
-    const cells = tl.split("|").filter(c => c.trim() !== "").map(c => c.trim().replace(/\*\*/g, ""));
-    if (cells.some(c => /^[-:]+$/.test(c.trim()))) continue;
-    if (!headers) headers = cells;
-    else rows.push(cells);
-  }
-
-  if (!headers || rows.length === 0) return null;
-  return { headers, rows, endIdx: i };
+  walk(root);
+  return blocks;
 }
 
 /* ─── Header/Footer ─── */
@@ -91,8 +141,9 @@ export function exportChatResponsePdf(content: string) {
   let y = 32;
 
   const cleaned = strip(content);
-  const lines = cleaned.split("\n");
-  let li = 0;
+  const blocks = htmlToBlocks(cleaned);
+  const tables = parseHtmlTables(cleaned);
+  let tableIdx = 0;
 
   const checkPage = (need: number) => {
     if (y + need > ph - 16) {
@@ -101,131 +152,134 @@ export function exportChatResponsePdf(content: string) {
     }
   };
 
-  while (li < lines.length) {
-    const raw = lines[li];
-    const t = raw.trim();
+  for (const block of blocks) {
+    switch (block.type) {
+      case "heading": {
+        if (block.level === 2) {
+          checkPage(12);
+          doc.setFontSize(12);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(0, 72, 138);
+          const wrapped = doc.splitTextToSize(block.text, maxW);
+          doc.text(wrapped, ml, y);
+          y += wrapped.length * 5.5 + 3;
+          doc.setDrawColor(0, 82, 148);
+          doc.setLineWidth(0.5);
+          doc.line(ml, y - 2, ml + 45, y - 2);
+          y += 2;
+        } else if (block.level === 3) {
+          checkPage(8);
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(0, 82, 148);
+          const wrapped = doc.splitTextToSize(block.text, maxW);
+          doc.text(wrapped, ml, y);
+          y += wrapped.length * 5 + 2;
+        } else {
+          checkPage(7);
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(50, 50, 50);
+          const wrapped = doc.splitTextToSize(block.text, maxW);
+          doc.text(wrapped, ml, y);
+          y += wrapped.length * 4.5 + 2;
+        }
+        break;
+      }
 
-    // ─── Table block → use autoTable ───
-    if (t.startsWith("|")) {
-      const table = parseTables(lines, li);
-      if (table) {
-        checkPage(20);
+      case "table-placeholder": {
+        if (tableIdx < tables.length) {
+          const table = tables[tableIdx];
+          checkPage(20);
 
-        autoTable(doc, {
-          startY: y,
-          head: [table.headers],
-          body: table.rows.map(r => table.headers.map((_, ci) => r[ci] || "")),
-          margin: { left: ml, right: mr },
-          styles: {
-            fontSize: 7.5,
-            cellPadding: { top: 2.5, right: 3, bottom: 2.5, left: 3 },
-            lineColor: [200, 210, 220],
-            lineWidth: 0.25,
-            overflow: "linebreak",
-            font: "helvetica",
-          },
-          headStyles: {
-            fillColor: [0, 82, 148],
-            textColor: [255, 255, 255],
-            fontStyle: "bold",
-            fontSize: 7.5,
-            halign: "left",
-          },
-          alternateRowStyles: {
-            fillColor: [245, 247, 252],
-          },
-          bodyStyles: {
-            textColor: [40, 40, 40],
-          },
-          tableLineColor: [200, 210, 220],
-          tableLineWidth: 0.25,
-          didDrawPage: () => {
-            // Ensure header on new pages
-          },
-        });
+          autoTable(doc, {
+            startY: y,
+            head: [table.headers],
+            body: table.rows.map(r => table.headers.map((_, ci) => r[ci] || "")),
+            margin: { left: ml, right: mr },
+            styles: {
+              fontSize: 7.5,
+              cellPadding: { top: 2.5, right: 3, bottom: 2.5, left: 3 },
+              lineColor: [200, 210, 220],
+              lineWidth: 0.25,
+              overflow: "linebreak",
+              font: "helvetica",
+            },
+            headStyles: {
+              fillColor: [0, 82, 148],
+              textColor: [255, 255, 255],
+              fontStyle: "bold",
+              fontSize: 7.5,
+              halign: "left",
+            },
+            alternateRowStyles: {
+              fillColor: [245, 247, 252],
+            },
+            bodyStyles: {
+              textColor: [40, 40, 40],
+            },
+            tableLineColor: [200, 210, 220],
+            tableLineWidth: 0.25,
+          });
 
-        y = (doc as any).lastAutoTable.finalY + 6;
-        li = table.endIdx;
-        continue;
+          y = (doc as any).lastAutoTable.finalY + 6;
+          tableIdx++;
+        }
+        break;
+      }
+
+      case "bullet": {
+        checkPage(6);
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(40, 40, 40);
+        const wrapped = doc.splitTextToSize(block.text, maxW - 8);
+        doc.setFillColor(0, 82, 148);
+        doc.circle(ml + 2, y - 1.2, 0.8, "F");
+        doc.text(wrapped, ml + 6, y);
+        y += wrapped.length * 4.2 + 2;
+        break;
+      }
+
+      case "numbered": {
+        checkPage(6);
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(40, 40, 40);
+        const wrapped = doc.splitTextToSize(block.text, maxW - 4);
+        doc.text(wrapped, ml + 2, y);
+        y += wrapped.length * 4.2 + 2;
+        break;
+      }
+
+      case "alert": {
+        checkPage(10);
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(180, 60, 60);
+        const wrapped = doc.splitTextToSize(block.text, maxW - 8);
+        doc.setFillColor(255, 240, 240);
+        doc.roundedRect(ml, y - 4, maxW, wrapped.length * 4.2 + 6, 2, 2, "F");
+        doc.setDrawColor(200, 80, 80);
+        doc.setLineWidth(0.6);
+        doc.line(ml, y - 4, ml, y - 4 + wrapped.length * 4.2 + 6);
+        doc.text(wrapped, ml + 4, y);
+        y += wrapped.length * 4.2 + 6;
+        break;
+      }
+
+      case "paragraph":
+      default: {
+        checkPage(6);
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(40, 40, 40);
+        const wrapped = doc.splitTextToSize(block.text, maxW);
+        doc.text(wrapped, ml, y);
+        y += wrapped.length * 4.2 + 2;
+        break;
       }
     }
-
-    // ─── Headings ───
-    if (t.startsWith("# ")) {
-      checkPage(12);
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 72, 138);
-      const wrapped = doc.splitTextToSize(t.replace(/^#+\s*/, ""), maxW);
-      doc.text(wrapped, ml, y);
-      y += wrapped.length * 6 + 3;
-      // Underline
-      doc.setDrawColor(0, 82, 148);
-      doc.setLineWidth(0.6);
-      doc.line(ml, y - 2, ml + 50, y - 2);
-      y += 2;
-    } else if (t.startsWith("## ")) {
-      checkPage(10);
-      doc.setFontSize(11.5);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 72, 138);
-      const wrapped = doc.splitTextToSize(t.replace(/^#+\s*/, ""), maxW);
-      doc.text(wrapped, ml, y);
-      y += wrapped.length * 5.5 + 3;
-      doc.setDrawColor(0, 102, 178);
-      doc.setLineWidth(0.4);
-      doc.line(ml, y - 2, ml + 40, y - 2);
-      y += 1;
-    } else if (t.startsWith("### ")) {
-      checkPage(8);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(50, 50, 50);
-      const wrapped = doc.splitTextToSize(t.replace(/^#+\s*/, ""), maxW);
-      doc.text(wrapped, ml, y);
-      y += wrapped.length * 5 + 2;
-    }
-    // ─── Bullets ───
-    else if (t.startsWith("- ") || t.startsWith("* ")) {
-      checkPage(6);
-      doc.setFontSize(8.5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(40, 40, 40);
-      const bulletText = t.replace(/^[-*]\s*/, "").replace(/\*\*/g, "");
-      const wrapped = doc.splitTextToSize(bulletText, maxW - 8);
-      doc.setFillColor(0, 82, 148);
-      doc.circle(ml + 2, y - 1.2, 0.8, "F");
-      doc.text(wrapped, ml + 6, y);
-      y += wrapped.length * 4.2 + 2;
-    }
-    // ─── Numbered ───
-    else if (/^\d+\.\s/.test(t)) {
-      checkPage(6);
-      doc.setFontSize(8.5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(40, 40, 40);
-      const numText = t.replace(/\*\*/g, "");
-      const wrapped = doc.splitTextToSize(numText, maxW - 4);
-      doc.text(wrapped, ml + 2, y);
-      y += wrapped.length * 4.2 + 2;
-    }
-    // ─── Blank ───
-    else if (t === "") {
-      y += 2.5;
-    }
-    // ─── Normal text ───
-    else {
-      checkPage(6);
-      doc.setFontSize(8.5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(40, 40, 40);
-      const cleanLine = t.replace(/\*\*/g, "");
-      const wrapped = doc.splitTextToSize(cleanLine, maxW);
-      doc.text(wrapped, ml, y);
-      y += wrapped.length * 4.2 + 1.5;
-    }
-
-    li++;
   }
 
   addFooters(doc);
@@ -236,8 +290,7 @@ export function exportChatResponsePdf(content: string) {
 }
 
 export function getChatResponsePlainText(content: string): string {
-  return strip(content)
-    .replace(/\*\*/g, "")
-    .replace(/^#+\s*/gm, "")
-    .replace(/^[-*]\s*/gm, "- ");
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${content}</div>`, "text/html");
+  return strip(doc.body.textContent || "");
 }

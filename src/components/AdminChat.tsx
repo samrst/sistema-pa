@@ -2,10 +2,9 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Loader2, BrainCircuit, Trash2, Sparkles, Paperclip, Mic, MicOff, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import ReactMarkdown from "react-markdown";
+import DOMPurify from "dompurify";
 import { useAcoes } from "@/hooks/useAcoes";
 import AdminChatActions from "@/components/AdminChatActions";
-import { markdownComponents } from "@/components/MarkdownRenderers";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type AttachedFile = { name: string; content: string };
@@ -15,8 +14,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-admin`;
 const SUGGESTIONS = [
   "Quais ações cadastradas ainda não foram iniciadas e quais cursos concentram a maior quantidade dessas ações?",
   "Quais ações estão relacionadas à padronização de materiais e metodologias e qual o status de execução dessas ações?",
- "Quais são as ações relacionadas a reforço de competências básicas (leitura e matemática) e em quais cursos elas estão sendo aplicadas?",
-  
+  "Quais são as ações relacionadas a reforço de competências básicas (leitura e matemática) e em quais cursos elas estão sendo aplicadas?",
 ];
 
 function readFileAsText(file: File): Promise<string> {
@@ -131,6 +129,23 @@ function useSpeechRecognition(onResult: (text: string) => void) {
   return { isListening, toggle };
 }
 
+/* Sanitize config — allow our status classes and table tags */
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "p", "br", "hr", "div", "span", "section",
+    "strong", "em", "b", "i", "u",
+    "ul", "ol", "li",
+    "table", "thead", "tbody", "tfoot", "tr", "th", "td",
+    "a", "blockquote", "pre", "code",
+  ],
+  ALLOWED_ATTR: ["class", "style", "href", "target", "rel", "colspan", "rowspan"],
+};
+
+function sanitizeHtml(raw: string): string {
+  return DOMPurify.sanitize(raw, SANITIZE_CONFIG);
+}
+
 // ─── Main Component ───
 const AdminChat = () => {
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -218,12 +233,12 @@ const AdminChat = () => {
         onDelta: upsert,
         onDone: () => setIsLoading(false),
         onError: (msg) => {
-          setMessages(prev => [...prev, { role: "assistant", content: `❌ ${msg}` }]);
+          setMessages(prev => [...prev, { role: "assistant", content: `<p style="color:red">❌ ${msg}</p>` }]);
           setIsLoading(false);
         },
       });
     } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "❌ Erro de conexão com a IA." }]);
+      setMessages(prev => [...prev, { role: "assistant", content: '<p style="color:red">❌ Erro de conexão com a IA.</p>' }]);
       setIsLoading(false);
     }
   };
@@ -297,9 +312,10 @@ const AdminChat = () => {
               >
                 {m.role === "assistant" ? (
                   <div>
-                    <div className="relatorio-ia prose prose-sm max-w-none dark:prose-invert">
-                      <ReactMarkdown components={markdownComponents}>{m.content}</ReactMarkdown>
-                    </div>
+                    <div
+                      className="agent-html"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(m.content) }}
+                    />
                     {!isLoading && m.content && <AdminChatActions content={m.content} />}
                   </div>
                 ) : (
@@ -337,7 +353,6 @@ const AdminChat = () => {
       {/* Input */}
       <div className="border-t border-border pt-3 mt-3">
         <div className="flex gap-2 items-end">
-          {/* File attach */}
           <input
             ref={fileInputRef}
             type="file"
@@ -357,7 +372,6 @@ const AdminChat = () => {
             <Paperclip size={18} />
           </Button>
 
-          {/* Mic */}
           <Button
             variant={isListening ? "default" : "ghost"}
             size="icon"
