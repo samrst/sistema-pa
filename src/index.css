@@ -109,16 +109,24 @@
 }
 
 /* ══════════════════════════════════════════════
-   AI AGENT RESPONSE SYSTEM — Professional Design
+   AGENT HTML RESPONSE SYSTEM
+   Clean, professional, Excel-quality output
    ══════════════════════════════════════════════ */
 
-/* ─── Section headings ─── */
-.relatorio-ia .prose .ai-h2,
-.relatorio-ia .prose h2 {
+.agent-html {
+  display: grid;
+  gap: 6px;
+  line-height: 1.6;
+  font-size: 13px;
+  color: hsl(var(--foreground) / 0.9);
+}
+
+/* ─── Headings ─── */
+.agent-html h2 {
   font-size: 15px;
   font-weight: 700;
   color: hsl(var(--foreground));
-  margin: 24px 0 10px 0;
+  margin: 20px 0 8px 0;
   padding: 8px 12px;
   background: linear-gradient(135deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.03));
   border-left: 4px solid hsl(var(--primary));
@@ -126,65 +134,77 @@
   letter-spacing: -0.01em;
 }
 
-.relatorio-ia .prose .ai-h2:first-of-type,
-.relatorio-ia .prose h2:first-of-type {
-  margin-top: 4px;
+.agent-html h2:first-child {
+  margin-top: 0;
 }
 
-.relatorio-ia .prose .ai-h3,
-.relatorio-ia .prose h3 {
+.agent-html h3 {
   font-size: 13px;
   font-weight: 700;
   color: hsl(var(--primary));
-  margin: 18px 0 8px 0;
+  margin: 16px 0 6px 0;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.relatorio-ia .prose .ai-h4,
-.relatorio-ia .prose h4 {
+.agent-html h4 {
   font-size: 12px;
   font-weight: 600;
   color: hsl(var(--muted-foreground));
-  margin: 12px 0 6px 0;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  margin: 12px 0 4px 0;
 }
 
-.relatorio-ia .prose hr {
-  margin: 20px 0;
-  border: 0;
-  height: 1px;
-  background: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
+/* ─── Paragraphs ─── */
+.agent-html p {
+  font-size: 12.5px;
+  line-height: 1.7;
+  margin: 6px 0;
+  color: hsl(var(--foreground) / 0.85);
 }
 
-/* ─── Excel-quality Table System ─── */
-.ai-table-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin: 12px 0;
-  border-radius: 8px;
-  border: 1px solid hsl(var(--border));
-  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.04);
+/* ─── Lists ─── */
+.agent-html ul,
+.agent-html ol {
+  margin: 8px 0;
+  padding-left: 20px;
 }
 
-.ai-table {
+.agent-html li {
+  font-size: 12.5px;
+  line-height: 1.65;
+  margin-bottom: 4px;
+  color: hsl(var(--foreground) / 0.85);
+}
+
+.agent-html strong {
+  color: hsl(var(--foreground));
+  font-weight: 700;
+}
+
+/* ─── Tables — Excel-quality ─── */
+.agent-html table {
   width: 100%;
   border-collapse: collapse;
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
   table-layout: auto;
+  margin: 10px 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.04);
 }
 
-.ai-thead {
+.agent-html thead {
   background: hsl(215 70% 28%);
-  position: sticky;
-  top: 0;
-  z-index: 2;
 }
 
-.ai-th {
-  padding: 8px 12px;
+.agent-html thead tr {
+  display: table-row;
+}
+
+.agent-html th {
+  padding: 9px 12px;
   text-align: left;
   font-weight: 700;
   font-size: 10.5px;
@@ -194,23 +214,19 @@
   border-right: 1px solid hsl(215 50% 35%);
   white-space: nowrap;
 }
-.ai-th:last-child { border-right: none; }
+.agent-html th:last-child { border-right: none; }
 
-.ai-tr {
-  transition: background 0.1s ease;
-}
-
-.ai-tr:nth-child(odd) {
+.agent-html tbody tr:nth-child(odd) {
   background: #fff;
 }
-.ai-tr:nth-child(even) {
+.agent-html tbody tr:nth-child(even) {
   background: hsl(220 30% 97%);
 }
-.ai-tr:hover {
+.agent-html tbody tr:hover {
   background: hsl(var(--primary) / 0.06);
 }
 
-.ai-td {
+.agent-html td {
   padding: 7px 12px;
   color: hsl(var(--foreground) / 0.88);
   font-size: 11.5px;
@@ -218,131 +234,136 @@
   border-bottom: 1px solid hsl(var(--border) / 0.4);
   vertical-align: middle;
   line-height: 1.55;
+  word-break: break-word;
 }
-.ai-td:last-child { border-right: none; }
+.agent-html td:last-child { border-right: none; }
 
-/* Dark mode tables */
-.dark .ai-thead {
+/* ─── Status badges ─── */
+.agent-html .status-done,
+.agent-html .status-progress,
+.agent-html .status-pending,
+.agent-html .status-late,
+.agent-html .status-planned {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.agent-html .status-done {
+  background: hsl(145 60% 92%);
+  color: hsl(145 60% 30%);
+}
+.agent-html .status-progress {
+  background: hsl(215 70% 92%);
+  color: hsl(215 70% 35%);
+}
+.agent-html .status-pending {
+  background: hsl(38 90% 92%);
+  color: hsl(38 70% 35%);
+}
+.agent-html .status-late {
+  background: hsl(0 70% 93%);
+  color: hsl(0 70% 38%);
+}
+.agent-html .status-planned {
+  background: hsl(270 60% 93%);
+  color: hsl(270 50% 40%);
+}
+
+/* ─── Alert boxes ─── */
+.agent-html .alert-critical,
+.agent-html .alert-success,
+.agent-html .alert-info {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 10px 0;
+}
+
+.agent-html .alert-critical {
+  background: hsl(0 70% 95%);
+  border-left: 4px solid hsl(0 70% 50%);
+  color: hsl(0 50% 30%);
+}
+.agent-html .alert-success {
+  background: hsl(145 60% 94%);
+  border-left: 4px solid hsl(145 60% 40%);
+  color: hsl(145 40% 25%);
+}
+.agent-html .alert-info {
+  background: hsl(215 70% 94%);
+  border-left: 4px solid hsl(215 70% 50%);
+  color: hsl(215 50% 30%);
+}
+
+/* ─── Dark mode ─── */
+.dark .agent-html thead {
   background: hsl(215 50% 22%);
 }
-.dark .ai-th {
+.dark .agent-html th {
   border-right-color: hsl(215 40% 30%);
 }
-.dark .ai-tr:nth-child(odd) {
+.dark .agent-html tbody tr:nth-child(odd) {
   background: hsl(var(--card));
 }
-.dark .ai-tr:nth-child(even) {
+.dark .agent-html tbody tr:nth-child(even) {
   background: hsl(var(--muted) / 0.3);
 }
-.dark .ai-td {
+.dark .agent-html td {
   border-right-color: hsl(var(--border) / 0.4);
   border-bottom-color: hsl(var(--border) / 0.3);
 }
 
-/* ─── Legacy table compatibility ─── */
-.relatorio-ia .prose table,
-.relatorio-table-wrapper table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 11.5px;
-  margin: 0;
-  font-variant-numeric: tabular-nums;
+.dark .agent-html .status-done {
+  background: hsl(145 40% 18%);
+  color: hsl(145 60% 70%);
+}
+.dark .agent-html .status-progress {
+  background: hsl(215 40% 18%);
+  color: hsl(215 70% 70%);
+}
+.dark .agent-html .status-pending {
+  background: hsl(38 40% 18%);
+  color: hsl(38 70% 70%);
+}
+.dark .agent-html .status-late {
+  background: hsl(0 40% 18%);
+  color: hsl(0 70% 70%);
+}
+.dark .agent-html .status-planned {
+  background: hsl(270 30% 18%);
+  color: hsl(270 50% 70%);
 }
 
-.relatorio-ia .prose thead,
-.relatorio-table-wrapper thead {
-  background: hsl(215 70% 28%);
-  position: sticky;
-  top: 0;
-  z-index: 1;
+/* ─── Print / PDF ─── */
+@media print {
+  .agent-html {
+    font-size: 11px;
+  }
+  .agent-html table {
+    page-break-inside: auto;
+  }
+  .agent-html tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  .agent-html thead {
+    display: table-header-group;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
 }
-
-.relatorio-ia .prose thead th,
-.relatorio-table-wrapper thead th {
-  padding: 8px 12px;
-  text-align: left;
-  font-weight: 700;
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #fff;
-  border-right: 1px solid hsl(215 50% 35%);
-  white-space: nowrap;
-}
-.relatorio-ia .prose thead th:last-child,
-.relatorio-table-wrapper thead th:last-child { border-right: none; }
-
-.relatorio-ia .prose tbody tr:nth-child(odd),
-.relatorio-table-wrapper tbody tr:nth-child(odd) { background: #fff; }
-.relatorio-ia .prose tbody tr:nth-child(even),
-.relatorio-table-wrapper tbody tr:nth-child(even) { background: hsl(220 30% 97%); }
-.relatorio-ia .prose tbody tr:hover,
-.relatorio-table-wrapper tbody tr:hover { background: hsl(var(--primary) / 0.06); }
-
-.relatorio-ia .prose tbody td,
-.relatorio-table-wrapper tbody td {
-  padding: 7px 12px;
-  color: hsl(var(--foreground) / 0.88);
-  font-size: 11.5px;
-  border-right: 1px solid hsl(var(--border) / 0.5);
-  border-bottom: 1px solid hsl(var(--border) / 0.4);
-  vertical-align: middle;
-  line-height: 1.55;
-}
-.relatorio-ia .prose tbody td:last-child,
-.relatorio-table-wrapper tbody td:last-child { border-right: none; }
-
-.relatorio-table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin: 12px 0;
-  border-radius: 8px;
-  border: 1px solid hsl(var(--border));
-  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.04);
-}
-
-/* ─── Text elements ─── */
-.relatorio-ia .prose ul {
-  margin: 10px 0;
-  padding-left: 16px;
-}
-.relatorio-ia .prose li {
-  font-size: 12px;
-  line-height: 1.65;
-  margin-bottom: 4px;
-  color: hsl(var(--foreground) / 0.85);
-}
-.relatorio-ia .prose ol {
-  margin: 10px 0;
-  padding-left: 16px;
-}
-.relatorio-ia .prose ol li {
-  padding-left: 2px;
-}
-.relatorio-ia .prose strong {
-  color: hsl(var(--foreground));
-  font-weight: 700;
-}
-.relatorio-ia .prose p {
-  font-size: 12px;
-  line-height: 1.7;
-  margin: 8px 0;
-  color: hsl(var(--foreground) / 0.85);
-}
-
-/* Dark mode legacy */
-.dark .relatorio-ia .prose tbody tr:nth-child(odd),
-.dark .relatorio-table-wrapper tbody tr:nth-child(odd) { background: hsl(var(--card)); }
-.dark .relatorio-ia .prose tbody tr:nth-child(even),
-.dark .relatorio-table-wrapper tbody tr:nth-child(even) { background: hsl(var(--muted) / 0.3); }
 
 /* ─── Responsive ─── */
 @media (max-width: 640px) {
-  .ai-th, .ai-td,
-  .relatorio-ia .prose thead th,
-  .relatorio-ia .prose tbody td,
-  .relatorio-table-wrapper thead th,
-  .relatorio-table-wrapper tbody td {
+  .agent-html th,
+  .agent-html td {
     padding: 5px 8px;
     font-size: 10px;
     min-width: 60px;
