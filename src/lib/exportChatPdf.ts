@@ -1,6 +1,8 @@
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
-function stripEmojis(text: string): string {
+/* ─── Emoji cleanup ─── */
+function strip(text: string): string {
   return text
     .replace(/\u{2705}/gu, "[OK]")
     .replace(/\u{274C}/gu, "[X]")
@@ -8,223 +10,234 @@ function stripEmojis(text: string): string {
     .replace(/\u{1F534}/gu, "[!]")
     .replace(/\u{1F7E1}/gu, "[-]")
     .replace(/\u{1F7E2}/gu, "[OK]")
-    .replace(/\u{1F4CA}/gu, "")
-    .replace(/\u{1F4CB}/gu, "")
-    .replace(/\u{1F4DD}/gu, "")
-    .replace(/\u{1F4A1}/gu, "")
-    .replace(/\u{1F3AF}/gu, "")
-    .replace(/\u{2B50}/gu, "*")
-    .replace(/[\u{1F600}-\u{1F64F}]/gu, "")
-    .replace(/[\u{1F300}-\u{1F5FF}]/gu, "")
-    .replace(/[\u{1F680}-\u{1F6FF}]/gu, "")
-    .replace(/[\u{1F900}-\u{1F9FF}]/gu, "")
-    .replace(/[\u{2600}-\u{27BF}]/gu, "")
-    .replace(/[\u{FE00}-\u{FE0F}]/gu, "")
-    .replace(/[\u{200D}]/gu, "")
+    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{1FA00}-\u{1FA9F}]/gu, "")
     .trim();
 }
 
-export function exportChatResponsePdf(content: string) {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const marginLeft = 15;
-  const marginRight = 15;
-  const maxWidth = pageWidth - marginLeft - marginRight;
-  let y = 20;
+/* ─── Parse markdown tables ─── */
+function parseTables(lines: string[], startIdx: number): { headers: string[]; rows: string[][]; endIdx: number } | null {
+  const tableLines: string[] = [];
+  let i = startIdx;
+  while (i < lines.length && lines[i].trim().startsWith("|")) {
+    tableLines.push(lines[i].trim());
+    i++;
+  }
+  if (tableLines.length < 2) return null;
 
-  // Header
-  doc.setFillColor(0, 90, 156);
-  doc.rect(0, 0, pageWidth, 28, "F");
+  let headers: string[] | null = null;
+  const rows: string[][] = [];
+
+  for (const tl of tableLines) {
+    const cells = tl.split("|").filter(c => c.trim() !== "").map(c => c.trim().replace(/\*\*/g, ""));
+    if (cells.some(c => /^[-:]+$/.test(c.trim()))) continue;
+    if (!headers) headers = cells;
+    else rows.push(cells);
+  }
+
+  if (!headers || rows.length === 0) return null;
+  return { headers, rows, endIdx: i };
+}
+
+/* ─── Header/Footer ─── */
+function addHeader(doc: jsPDF) {
+  const pw = doc.internal.pageSize.getWidth();
+  doc.setFillColor(0, 82, 148);
+  doc.rect(0, 0, pw, 22, "F");
+  doc.setFillColor(0, 102, 178);
+  doc.rect(0, 22, pw, 4, "F");
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("SENAI Feira de Santana", marginLeft, 12);
-  doc.setFontSize(9);
+  doc.setFontSize(13);
+  doc.text("SENAI Feira de Santana", 14, 11);
+  doc.setFontSize(8.5);
   doc.setFont("helvetica", "normal");
-  doc.text("Plano de Acao SAEP 2026 - Relatorio do Agente IA", marginLeft, 19);
-
+  doc.text("Plano de Acao SAEP 2026 — Relatorio do Agente IA", 14, 18);
   const now = new Date();
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.text(
     `Gerado em: ${now.toLocaleDateString("pt-BR")} as ${now.toLocaleTimeString("pt-BR")}`,
-    pageWidth - marginRight,
-    24,
-    { align: "right" }
+    pw - 14, 18, { align: "right" }
   );
+}
 
-  y = 36;
-  doc.setTextColor(0, 0, 0);
-
-  const cleanContent = stripEmojis(content);
-  const lines = cleanContent.split("\n");
-
-  let lineIdx = 0;
-  while (lineIdx < lines.length) {
-    const line = lines[lineIdx];
-    if (y > pageHeight - 20) {
-      doc.addPage();
-      y = 15;
-    }
-
-    const trimmed = line.trim();
-
-    if (trimmed.startsWith("# ")) {
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 90, 156);
-      const wrapped = doc.splitTextToSize(trimmed.replace(/^#+\s*/, ""), maxWidth);
-      doc.text(wrapped, marginLeft, y);
-      y += wrapped.length * 6 + 4;
-    } else if (trimmed.startsWith("## ")) {
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 70, 130);
-      const wrapped = doc.splitTextToSize(trimmed.replace(/^#+\s*/, ""), maxWidth);
-      doc.text(wrapped, marginLeft, y);
-      y += wrapped.length * 5.5 + 3;
-    } else if (trimmed.startsWith("### ")) {
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(40, 40, 40);
-      const wrapped = doc.splitTextToSize(trimmed.replace(/^#+\s*/, ""), maxWidth);
-      doc.text(wrapped, marginLeft, y);
-      y += wrapped.length * 5 + 2;
-    } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(30, 30, 30);
-      const bulletText = trimmed.replace(/^[-*]\s*/, "");
-      const cleanBullet = bulletText.replace(/\*\*/g, "");
-      const wrapped = doc.splitTextToSize(cleanBullet, maxWidth - 8);
-      doc.text("•", marginLeft + 2, y);
-      doc.text(wrapped, marginLeft + 7, y);
-      y += wrapped.length * 4.5 + 1.5;
-    } else if (trimmed.startsWith("|")) {
-      // Collect full table
-      const tableLines: string[] = [];
-      while (lineIdx < lines.length && lines[lineIdx].trim().startsWith("|")) {
-        tableLines.push(lines[lineIdx].trim());
-        lineIdx++;
-      }
-
-      // Parse table
-      const dataRows: string[][] = [];
-      let headerRow: string[] | null = null;
-      for (let ti = 0; ti < tableLines.length; ti++) {
-        const cells = tableLines[ti].split("|").filter((c) => c.trim() !== "");
-        if (cells.some((c) => /^[-:]+$/.test(c.trim()))) continue;
-        const cleaned = cells.map((c) => c.trim().replace(/\*\*/g, ""));
-        if (!headerRow) {
-          headerRow = cleaned;
-        } else {
-          dataRows.push(cleaned);
-        }
-      }
-
-      if (headerRow) {
-        const numCols = headerRow.length;
-        const colWidth = maxWidth / numCols;
-        const rowH = 7;
-        const cellPad = 2;
-
-        // Check page space
-        const tableHeight = (dataRows.length + 1) * rowH + 4;
-        if (y + tableHeight > pageHeight - 20) {
-          doc.addPage();
-          y = 15;
-        }
-
-        // Draw header
-        doc.setFillColor(0, 90, 156);
-        doc.rect(marginLeft, y - 4, maxWidth, rowH, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(7.5);
-        headerRow.forEach((cell, ci) => {
-          const x = marginLeft + ci * colWidth + cellPad;
-          doc.text(cell.substring(0, Math.floor(colWidth / 1.8)), x, y);
-        });
-        doc.setDrawColor(0, 70, 130);
-        doc.setLineWidth(0.2);
-        for (let ci = 0; ci <= numCols; ci++) {
-          const x = marginLeft + ci * colWidth;
-          doc.line(x, y - 4, x, y - 4 + rowH);
-        }
-        doc.line(marginLeft, y - 4, marginLeft + maxWidth, y - 4);
-        doc.line(marginLeft, y - 4 + rowH, marginLeft + maxWidth, y - 4 + rowH);
-        y += rowH;
-
-        // Draw data rows
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7.5);
-        dataRows.forEach((row, ri) => {
-          if (y + rowH > pageHeight - 20) {
-            doc.addPage();
-            y = 15;
-          }
-          if (ri % 2 === 0) {
-            doc.setFillColor(245, 247, 250);
-          } else {
-            doc.setFillColor(255, 255, 255);
-          }
-          doc.rect(marginLeft, y - 4, maxWidth, rowH, "F");
-
-          doc.setDrawColor(200, 210, 220);
-          doc.setLineWidth(0.15);
-          for (let ci = 0; ci <= numCols; ci++) {
-            const x = marginLeft + ci * colWidth;
-            doc.line(x, y - 4, x, y - 4 + rowH);
-          }
-          doc.line(marginLeft, y - 4 + rowH, marginLeft + maxWidth, y - 4 + rowH);
-
-          doc.setTextColor(30, 30, 30);
-          row.forEach((cell, ci) => {
-            const x = marginLeft + ci * colWidth + cellPad;
-            const maxChars = Math.floor((colWidth - cellPad * 2) / 1.8);
-            doc.text(cell.substring(0, maxChars), x, y);
-          });
-          y += rowH;
-        });
-
-        y += 3;
-      }
-      continue;
-    } else if (trimmed === "") {
-      y += 3;
-    } else {
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(30, 30, 30);
-      const cleanLine = trimmed.replace(/\*\*/g, "");
-      const wrapped = doc.splitTextToSize(cleanLine, maxWidth);
-      doc.text(wrapped, marginLeft, y);
-      y += wrapped.length * 4.5 + 1.5;
-    }
-    lineIdx++;
-  }
-
-  // Footer on each page
-  const totalPages = doc.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i++) {
+function addFooters(doc: jsPDF) {
+  const total = doc.getNumberOfPages();
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+  for (let i = 1; i <= total; i++) {
     doc.setPage(i);
+    doc.setDrawColor(200, 210, 220);
+    doc.setLineWidth(0.3);
+    doc.line(14, ph - 12, pw - 14, ph - 12);
     doc.setFontSize(7);
-    doc.setTextColor(150, 150, 150);
+    doc.setTextColor(140, 140, 140);
     doc.text(
-      `SENAI Feira de Santana | Plano de Acao SAEP 2026 | Pagina ${i} de ${totalPages}`,
-      pageWidth / 2,
-      pageHeight - 8,
-      { align: "center" }
+      `SENAI Feira de Santana | Plano de Acao SAEP 2026 | Pagina ${i} de ${total}`,
+      pw / 2, ph - 7, { align: "center" }
     );
   }
+}
 
+/* ─── Main export ─── */
+export function exportChatResponsePdf(content: string) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+  const ml = 14;
+  const mr = 14;
+  const maxW = pw - ml - mr;
+
+  addHeader(doc);
+  let y = 32;
+
+  const cleaned = strip(content);
+  const lines = cleaned.split("\n");
+  let li = 0;
+
+  const checkPage = (need: number) => {
+    if (y + need > ph - 16) {
+      doc.addPage();
+      y = 14;
+    }
+  };
+
+  while (li < lines.length) {
+    const raw = lines[li];
+    const t = raw.trim();
+
+    // ─── Table block → use autoTable ───
+    if (t.startsWith("|")) {
+      const table = parseTables(lines, li);
+      if (table) {
+        checkPage(20);
+
+        autoTable(doc, {
+          startY: y,
+          head: [table.headers],
+          body: table.rows.map(r => table.headers.map((_, ci) => r[ci] || "")),
+          margin: { left: ml, right: mr },
+          styles: {
+            fontSize: 7.5,
+            cellPadding: { top: 2.5, right: 3, bottom: 2.5, left: 3 },
+            lineColor: [200, 210, 220],
+            lineWidth: 0.25,
+            overflow: "linebreak",
+            font: "helvetica",
+          },
+          headStyles: {
+            fillColor: [0, 82, 148],
+            textColor: [255, 255, 255],
+            fontStyle: "bold",
+            fontSize: 7.5,
+            halign: "left",
+          },
+          alternateRowStyles: {
+            fillColor: [245, 247, 252],
+          },
+          bodyStyles: {
+            textColor: [40, 40, 40],
+          },
+          tableLineColor: [200, 210, 220],
+          tableLineWidth: 0.25,
+          didDrawPage: () => {
+            // Ensure header on new pages
+          },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 6;
+        li = table.endIdx;
+        continue;
+      }
+    }
+
+    // ─── Headings ───
+    if (t.startsWith("# ")) {
+      checkPage(12);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 72, 138);
+      const wrapped = doc.splitTextToSize(t.replace(/^#+\s*/, ""), maxW);
+      doc.text(wrapped, ml, y);
+      y += wrapped.length * 6 + 3;
+      // Underline
+      doc.setDrawColor(0, 82, 148);
+      doc.setLineWidth(0.6);
+      doc.line(ml, y - 2, ml + 50, y - 2);
+      y += 2;
+    } else if (t.startsWith("## ")) {
+      checkPage(10);
+      doc.setFontSize(11.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 72, 138);
+      const wrapped = doc.splitTextToSize(t.replace(/^#+\s*/, ""), maxW);
+      doc.text(wrapped, ml, y);
+      y += wrapped.length * 5.5 + 3;
+      doc.setDrawColor(0, 102, 178);
+      doc.setLineWidth(0.4);
+      doc.line(ml, y - 2, ml + 40, y - 2);
+      y += 1;
+    } else if (t.startsWith("### ")) {
+      checkPage(8);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(50, 50, 50);
+      const wrapped = doc.splitTextToSize(t.replace(/^#+\s*/, ""), maxW);
+      doc.text(wrapped, ml, y);
+      y += wrapped.length * 5 + 2;
+    }
+    // ─── Bullets ───
+    else if (t.startsWith("- ") || t.startsWith("* ")) {
+      checkPage(6);
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(40, 40, 40);
+      const bulletText = t.replace(/^[-*]\s*/, "").replace(/\*\*/g, "");
+      const wrapped = doc.splitTextToSize(bulletText, maxW - 8);
+      doc.setFillColor(0, 82, 148);
+      doc.circle(ml + 2, y - 1.2, 0.8, "F");
+      doc.text(wrapped, ml + 6, y);
+      y += wrapped.length * 4.2 + 2;
+    }
+    // ─── Numbered ───
+    else if (/^\d+\.\s/.test(t)) {
+      checkPage(6);
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(40, 40, 40);
+      const numText = t.replace(/\*\*/g, "");
+      const wrapped = doc.splitTextToSize(numText, maxW - 4);
+      doc.text(wrapped, ml + 2, y);
+      y += wrapped.length * 4.2 + 2;
+    }
+    // ─── Blank ───
+    else if (t === "") {
+      y += 2.5;
+    }
+    // ─── Normal text ───
+    else {
+      checkPage(6);
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(40, 40, 40);
+      const cleanLine = t.replace(/\*\*/g, "");
+      const wrapped = doc.splitTextToSize(cleanLine, maxW);
+      doc.text(wrapped, ml, y);
+      y += wrapped.length * 4.2 + 1.5;
+    }
+
+    li++;
+  }
+
+  addFooters(doc);
+
+  const now = new Date();
   doc.save(`relatorio-agente-ia-${now.toISOString().slice(0, 10)}.pdf`);
   return doc;
 }
 
 export function getChatResponsePlainText(content: string): string {
-  return stripEmojis(content)
+  return strip(content)
     .replace(/\*\*/g, "")
     .replace(/^#+\s*/gm, "")
-    .replace(/^[-*]\s*/gm, "• ");
+    .replace(/^[-*]\s*/gm, "- ");
 }
