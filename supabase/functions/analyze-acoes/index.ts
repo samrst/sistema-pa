@@ -5,18 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const CURSOS_CADASTRADOS = [
-  "Técnico em Eletromecânica",
-  "Técnico em Manutenção Automotiva",
-  "Técnico em Eletrotécnica",
-  "Técnico em Logística",
-  "Técnico em Administração",
-  "Técnico em Desenvolvimento de Sistemas",
-  "Técnico em Química",
-  "Técnico em Automação",
-  "Técnico em Segurança do Trabalho",
-];
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -33,81 +21,62 @@ serve(async (req) => {
       });
     }
 
-    const hoje = new Date().toISOString().slice(0, 10);
+    const systemPrompt = `Voce e um Consultor Estrategico Senior do SENAI.
+Sua resposta deve ser um RELATORIO EXECUTIVO em HTML puro.
 
-    // --- CONFIGURAÇÃO DO AGENTE (FORMATO ULTRA ESPAÇADO) ---
-    const systemPrompt = `Você é um Consultor Estratégico Sênior do SENAI. 
-Sua resposta deve ser um RELATÓRIO EXECUTIVO com ESPAÇAMENTO AMPLO e visual limpo.
+REGRAS CRITICAS DE FORMATACAO — SIGA RIGOROSAMENTE:
 
-REGRAS DE FORMATAÇÃO VISUAL (OBRIGATÓRIAS):
-1. PULE DUAS LINHAS entre cada seção e entre cada item de análise.
-2. NUNCA use tabelas Markdown (|---|).
-3. Use LINHAS DIVISORAS LONGAS (════) para criar separação visual clara.
-4. Use RECUOS e espaços para hierarquizar as informações.
-5. Use emojis apenas como marcadores de status: 🔴, 🟡, 🟢.`;
+IMPORTANTE: Responda SEMPRE em HTML puro. NUNCA use Markdown. NUNCA use pipes (|), tracos (---), asteriscos (**), ou cerquilhas (###).
 
-    const userPrompt = `Analise as ${acoes.length} ações do plano SAEP para viabilidade e cruzamento de dados. 
+1. ESTRUTURA GERAL:
+   - Use tags HTML semanticas: <section>, <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>
+   - Separe secoes com <div style="height:20px"></div> para espacamento amplo
+   - Use <h2> para titulos de secao e <h3> para subtitulos
+   - Paragrafos devem usar <p> com texto claro e objetivo
 
-DADOS PARA ANÁLISE:
+2. TABELAS — REGRA OBRIGATORIA:
+   - Use EXCLUSIVAMENTE tabelas HTML completas: <table><thead><tr><th>...</th></tr></thead><tbody><tr><td>...</td></tr></tbody></table>
+   - NUNCA use formato Markdown com pipes (|) para tabelas
+   - MAXIMO 5 colunas por tabela
+   - Colunas devem ter nomes curtos (max 3 palavras)
+   - Para status, use EXATAMENTE: "Concluido", "Em andamento", "Nao iniciado", "Atrasado", "Planejado"
+   - Envolva status em <span class="status-TAG">TEXTO</span> onde TAG e: done, progress, pending, late, planned
+     Exemplo: <span class="status-done">Concluido</span>
+     Exemplo: <span class="status-progress">Em andamento</span>
+     Exemplo: <span class="status-pending">Nao iniciado</span>
+     Exemplo: <span class="status-late">Atrasado</span>
+   - Sempre coloque um <h3> antes de cada tabela explicando o que ela mostra
+
+3. LISTAS:
+   - Use <ul><li>...</li></ul> para listas nao ordenadas
+   - Use <ol><li>...</li></ol> para listas ordenadas
+   - Use <strong> para termos-chave dentro de listas
+
+4. DESTAQUES:
+   - Para alertas criticos: <div class="alert-critical"><strong>Atencao:</strong> texto</div>
+   - Para destaques positivos: <div class="alert-success"><strong>Destaque:</strong> texto</div>
+   - Para informacoes: <div class="alert-info"><strong>Info:</strong> texto</div>
+
+5. ESTRUTURA DO RELATORIO:
+   - Secao 1: <h2>Diagnostico Estrategico do Plano</h2> — resumo executivo de 4-5 linhas
+   - Secao 2: <h2>Cruzamento de Dados e Sinergias</h2> — padroes em comum entre cursos, com tabela
+   - Secao 3: <h2>Analise de Viabilidade por Acao</h2> — cada acao analisada com status, critica e melhoria, com tabela
+   - Secao 4: <h2>Recomendacoes Finais</h2> — proximos passos priorizados
+
+6. COMPORTAMENTO:
+   - Seja direto, objetivo e profissional
+   - Ao analisar dados, traga insights acionaveis
+   - Identifique cursos sem acoes cadastradas
+   - Categorize acoes por tipo
+   - Use espacamento generoso entre secoes`;
+
+    const userPrompt = `Analise as ${acoes.length} acoes do plano SAEP para viabilidade e cruzamento de dados.
+
+DADOS PARA ANALISE:
 ${JSON.stringify(acoes, null, 2)}
 
-ESTRUTURE O TEXTO EXATAMENTE ASSIM (RESPEITANDO OS ESPAÇOS DUPLOS):
+Gere o relatorio executivo completo em HTML puro seguindo as regras do sistema.`;
 
-══════════════════════════════════════════════════
-📊  DIAGNÓSTICO ESTRATÉGICO DO PLANO
-══════════════════════════════════════════════════
-
-
-[Escreva aqui um resumo executivo de 4 linhas sobre a saúde do plano]
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔍  CRUZAMENTO DE DADOS E SINERGIAS (PONTOS EM COMUM)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-• PADRÃO IDENTIFICADO: [Nome do Padrão]
-
-• CURSOS ENVOLVIDOS: [Lista de Cursos]
-
-• ANÁLISE TÉCNICA: [Por que unificar e qual o ganho de eficiência?]
-
-
-(Pule duas linhas antes do próximo padrão)
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯  ANÁLISE DE VIABILIDADE E MELHORIAS POR AÇÃO
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-• AÇÃO: [Nome]
-
-• STATUS: 🔴/🟡/🟢
-
-• CRÍTICA DO CONSULTOR: [Análise sobre prazo e viabilidade]
-
-• PROPOSTA DE MELHORIA: [Como tornar essa ação mais estratégica]
-
-
-(Pule duas linhas antes da próxima ação)
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💡  RECOMENDAÇÕES FINAIS (PRÓXIMOS PASSOS)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-1. [Recomendação 1] - Prioridade Máxima
-
-2. [Recomendação 2] - Prioridade Média
-
-
-══════════════════════════════════════════════════
-FIM DO RELATÓRIO DE CONSULTORIA
-══════════════════════════════════════════════════`;
-
-    // --- CHAMADA PARA A API ---
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {

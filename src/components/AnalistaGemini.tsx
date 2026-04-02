@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
 import { BrainCircuit, Sparkles, Loader2, ClipboardList, FileText, RotateCcw, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import ReactMarkdown from "react-markdown";
+import DOMPurify from "dompurify";
 import { exportRelatorioPdf } from "@/lib/exportRelatorioPdf";
+
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    "h2", "h3", "h4", "p", "br", "hr", "div", "section", "span",
+    "table", "thead", "tbody", "tfoot", "tr", "th", "td",
+    "ul", "ol", "li", "strong", "em", "b", "i",
+  ],
+  ALLOWED_ATTR: ["class", "style", "colspan", "rowspan"],
+};
+
+function sanitizeHtml(raw: string): string {
+  let html = raw.replace(/^```html?\s*/i, "").replace(/```\s*$/i, "").trim();
+  return DOMPurify.sanitize(html, SANITIZE_CONFIG);
+}
 
 const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
   const [analise, setAnalise] = useState<string>("");
@@ -102,11 +116,8 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
               </button>
             </div>
 
-            {/* Report Body */}
-            <div className="relatorio-ia p-4 sm:p-6">
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <ReactMarkdown>{analise}</ReactMarkdown>
-              </div>
+            <div className="agent-html p-4 sm:p-6">
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(analise) }} />
             </div>
           </div>
           
