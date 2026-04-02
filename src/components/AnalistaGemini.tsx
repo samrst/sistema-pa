@@ -116,11 +116,8 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
               </button>
             </div>
 
-            {/* Report Body */}
-            <div className="relatorio-ia p-4 sm:p-6">
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <ReactMarkdown>{analise}</ReactMarkdown>
-              </div>
+            <div className="agent-html p-4 sm:p-6">
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(analise) }} />
             </div>
           </div>
           
