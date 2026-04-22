@@ -1,36 +1,14 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
-/**
- * Parses markdown content and generates a professional PDF report
- * with Excel-like tables for the AI analysis.
- */
-function stripEmojis(text: string): string {
-  return text
-    .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
-    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
-    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
-    .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '')
-    .replace(/[\u{2600}-\u{27BF}]/gu, '')
-    .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')
-    .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '')
-    .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '')
-    .replace(/[\u{2702}-\u{27B0}]/gu, '')
-    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
-    .replace(/[\u{200D}]/gu, '')
-    .replace(/[\u{20E3}]/gu, '')
-    .replace(/[\u{E0020}-\u{E007F}]/gu, '')
-    .replace(/\u{2705}/gu, '[OK]')
-    .replace(/\u{274C}/gu, '[X]')
-    .replace(/\u{26A0}/gu, '[!]')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-}
+import { buildColumnStyles, getPreferredPdfOrientation, parseReportHtml, stripPdfEmojis } from "@/lib/reportPdfHtml";
 
 export function exportRelatorioPdf(markdownContent: string, totalAcoes: number) {
-  const cleaned = stripEmojis(markdownContent);
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const cleaned = stripPdfEmojis(markdownContent);
+  const { blocks, tables } = parseReportHtml(cleaned);
+  const orientation = getPreferredPdfOrientation(tables);
+  const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const marginLeft = 14;
   const marginRight = 14;
   const contentWidth = pageWidth - marginLeft - marginRight;
@@ -63,138 +41,128 @@ export function exportRelatorioPdf(markdownContent: string, totalAcoes: number) 
 
   let y = 55;
 
-  // Parse markdown into sections
-  const lines = cleaned.split("\n");
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i].trim();
-
-    // Skip empty lines and horizontal rules
-    if (line === "" || line === "---") {
-      i++;
-      continue;
-    }
-
-    // Check page overflow
-    if (y > 270) {
+  const ensurePageSpace = (requiredHeight: number) => {
+    if (y + requiredHeight > pageHeight - 18) {
       doc.addPage();
       y = 20;
     }
+  };
 
-    // H2 - Section headers
-    if (line.startsWith("## ")) {
-      if (y > 250) { doc.addPage(); y = 20; }
-      const title = line.replace("## ", "").replace(/[#]/g, "").trim();
-      
-      // Blue bar accent
-      doc.setFillColor(37, 99, 235);
-      doc.rect(marginLeft, y - 1, 3, 7, "F");
-      
-      doc.setFontSize(12);
+  blocks.forEach((block) => {
+    if (block.type === "heading") {
+      const fontSize = block.level === 2 ? 12 : block.level === 3 ? 10 : 9;
+      const accentHeight = block.level === 2 ? 7 : 0;
+      doc.setFontSize(fontSize);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(30, 30, 30);
-      doc.text(title, marginLeft + 6, y + 4);
-      y += 12;
-      i++;
-      continue;
-    }
+      doc.setTextColor(block.level === 2 ? 30 : block.level === 3 ? 37 : 80, block.level === 2 ? 30 : 99, block.level === 2 ? 30 : block.level === 3 ? 235 : 80);
+      const wrapped = doc.splitTextToSize(block.text, block.level === 2 ? contentWidth - 6 : contentWidth);
+      const estimatedHeight = wrapped.length * (block.level === 2 ? 5 : 4.5) + (block.level === 2 ? 6 : 4);
+      ensurePageSpace(estimatedHeight);
 
-    // H3 - Sub-section headers
-    if (line.startsWith("### ")) {
-      if (y > 255) { doc.addPage(); y = 20; }
-      const title = line.replace("### ", "").trim();
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(37, 99, 235);
-      doc.text(title, marginLeft, y + 3);
-      y += 8;
-      i++;
-      continue;
-    }
-
-    // H4
-    if (line.startsWith("#### ")) {
-      const title = line.replace("#### ", "").trim();
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(80, 80, 80);
-      doc.text(title, marginLeft, y + 3);
-      y += 7;
-      i++;
-      continue;
-    }
-
-    // Bold standalone lines (like **Padrão: ...**)
-    if (line.startsWith("**") && line.endsWith("**") && !line.includes("|")) {
-      if (y > 260) { doc.addPage(); y = 20; }
-      const text = line.replace(/\*\*/g, "").trim();
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(50, 50, 50);
-      doc.text(text, marginLeft, y + 3);
-      y += 7;
-      i++;
-      continue;
-    }
-
-    // TABLE detection
-    if (line.startsWith("|")) {
-      const tableLines: string[] = [];
-      while (i < lines.length && lines[i].trim().startsWith("|")) {
-        tableLines.push(lines[i].trim());
-        i++;
+      if (block.level === 2) {
+        doc.setFillColor(37, 99, 235);
+        doc.rect(marginLeft, y - 1, 3, accentHeight, "F");
+        doc.text(wrapped, marginLeft + 6, y + 4);
+        y += wrapped.length * 5 + 6;
+      } else {
+        doc.text(wrapped, marginLeft, y + 3);
+        y += wrapped.length * 4.5 + 4;
       }
 
-      // Parse table
-      const rows = tableLines
-        .filter(l => !l.match(/^\|[\s\-:|]+\|$/)) // skip separator
-        .map(l =>
-          l.split("|").filter((_, idx, arr) => idx > 0 && idx < arr.length - 1).map(c => c.trim())
-        );
-
-      if (rows.length > 0) {
-        const head = rows[0];
-        const body = rows.slice(1);
-
-        if (y > 240) { doc.addPage(); y = 20; }
-
-        autoTable(doc, {
-          startY: y,
-          head: [head],
-          body: body,
-          styles: { fontSize: 7.5, cellPadding: 2, lineColor: [220, 220, 220], lineWidth: 0.2 },
-          headStyles: { fillColor: [37, 99, 235], fontSize: 7.5, fontStyle: "bold", textColor: [255, 255, 255] },
-          alternateRowStyles: { fillColor: [245, 247, 250] },
-          margin: { left: marginLeft, right: marginRight },
-          tableWidth: contentWidth,
-          theme: "grid",
-          didDrawPage: () => { /* reset y on new page */ },
-        });
-
-        y = (doc as any).lastAutoTable.finalY + 6;
-      }
-      continue;
+      return;
     }
 
-    // Regular text / paragraphs
-    if (line.length > 0) {
+    if (block.type === "table") {
+      const table = tables[block.tableIndex];
+      if (!table) return;
+      ensurePageSpace(24);
+
+      autoTable(doc, {
+        startY: y,
+        head: [table.headers],
+        body: table.rows,
+        margin: { left: marginLeft, right: marginRight },
+        tableWidth: contentWidth,
+        theme: "grid",
+        styles: {
+          font: "helvetica",
+          fontSize: orientation === "landscape" ? 7.2 : 7.6,
+          cellPadding: { top: 2.6, right: 2.4, bottom: 2.6, left: 2.4 },
+          overflow: "linebreak",
+          valign: "middle",
+          lineColor: [220, 220, 220],
+          lineWidth: 0.2,
+          minCellHeight: 7,
+          cellWidth: "wrap",
+        },
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: orientation === "landscape" ? 7.1 : 7.4,
+          halign: "left",
+          valign: "middle",
+        },
+        alternateRowStyles: { fillColor: [245, 247, 250] },
+        bodyStyles: { textColor: [40, 40, 40] },
+        columnStyles: buildColumnStyles(table.headers, contentWidth),
+        rowPageBreak: "avoid",
+        showHead: "everyPage",
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 7;
+      return;
+    }
+
+    if (block.type === "alert") {
       doc.setFontSize(8.5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(60, 60, 60);
+      doc.setFont("helvetica", "bold");
+      const wrapped = doc.splitTextToSize(block.text, contentWidth - 8);
+      const boxHeight = wrapped.length * 4.2 + 6;
+      ensurePageSpace(boxHeight + 2);
 
-      // Clean markdown bold/italic for plain text
-      const cleanText = line.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
-      const splitLines = doc.splitTextToSize(cleanText, contentWidth);
-      
-      if (y + splitLines.length * 4 > 275) { doc.addPage(); y = 20; }
-      
-      doc.text(splitLines, marginLeft, y + 3);
-      y += splitLines.length * 4 + 3;
+      if (block.tone === "critical") {
+        doc.setFillColor(255, 240, 240);
+        doc.setDrawColor(200, 80, 80);
+        doc.setTextColor(180, 60, 60);
+      } else if (block.tone === "success") {
+        doc.setFillColor(239, 250, 244);
+        doc.setDrawColor(60, 160, 95);
+        doc.setTextColor(42, 109, 64);
+      } else {
+        doc.setFillColor(239, 246, 255);
+        doc.setDrawColor(59, 130, 246);
+        doc.setTextColor(30, 64, 175);
+      }
+
+      doc.roundedRect(marginLeft, y - 4, contentWidth, boxHeight, 2, 2, "F");
+      doc.setLineWidth(0.6);
+      doc.line(marginLeft, y - 4, marginLeft, y - 4 + boxHeight);
+      doc.text(wrapped, marginLeft + 4, y);
+      y += boxHeight + 2;
+      return;
     }
 
-    i++;
-  }
+    const isList = block.type === "bullet" || block.type === "numbered";
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(60, 60, 60);
+    const wrapped = doc.splitTextToSize(block.text, contentWidth - (isList ? 8 : 0));
+    const textHeight = wrapped.length * 4.2 + 3;
+    ensurePageSpace(textHeight);
+
+    if (block.type === "bullet") {
+      doc.setFillColor(37, 99, 235);
+      doc.circle(marginLeft + 2, y + 0.6, 0.8, "F");
+      doc.text(wrapped, marginLeft + 6, y + 2);
+    } else if (block.type === "numbered") {
+      doc.text(wrapped, marginLeft + 3, y + 2);
+    } else {
+      doc.text(wrapped, marginLeft, y + 2);
+    }
+
+    y += textHeight;
+  });
 
   // Footer on all pages
   const totalPages = doc.getNumberOfPages();
