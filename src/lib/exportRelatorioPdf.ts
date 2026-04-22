@@ -1,133 +1,179 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { buildColumnStyles, parseReportHtml, stripPdfEmojis, type PdfTable } from "@/lib/reportPdfHtml";
+import { buildColumnStyles, getPreferredPdfOrientation, parseReportHtml, stripPdfEmojis } from "@/lib/reportPdfHtml";
 
-/**
- * Exporta um RESUMO de UMA PÁGINA contendo apenas as ações (tabelas).
- * Sem detalhamento, sem parágrafos longos, sem alertas — apenas o essencial.
- * Layout sempre paisagem para acomodar mais colunas, com fonte auto-ajustada.
- */
 export function exportRelatorioPdf(markdownContent: string, totalAcoes: number) {
   const cleaned = stripPdfEmojis(markdownContent);
-  const { tables } = parseReportHtml(cleaned);
-
-  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const { blocks, tables } = parseReportHtml(cleaned);
+  const orientation = getPreferredPdfOrientation(tables);
+  const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const marginLeft = 10;
-  const marginRight = 10;
-  const marginTop = 8;
-  const marginBottom = 10;
+  const marginLeft = 14;
+  const marginRight = 14;
   const contentWidth = pageWidth - marginLeft - marginRight;
 
-  // ── HEADER COMPACTO ──
+  // ── COVER / HEADER ──
   doc.setFillColor(37, 99, 235);
-  doc.rect(0, 0, pageWidth, 18, "F");
+  doc.rect(0, 0, pageWidth, 45, "F");
 
-  doc.setFontSize(12);
+  doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("SENAI Feira de Santana — Plano de Ação SAEP 2026", marginLeft, 8);
+  doc.text("SENAI Feira de Santana", marginLeft, 18);
+
+  doc.setFontSize(14);
+  doc.text("Plano de Ação SAEP 2026", marginLeft, 27);
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Relatório Executivo de Análise IA • ${totalAcoes} ações analisadas`, marginLeft, 35);
 
   doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Resumo Executivo de Ações • ${totalAcoes} ações`, marginLeft, 14);
-
   doc.text(
-    new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
+    `Gerado em ${new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`,
     pageWidth - marginRight,
-    14,
+    35,
     { align: "right" }
   );
 
   doc.setTextColor(0, 0, 0);
 
-  // Escolhe a tabela mais relevante (a que tem mais linhas — provavelmente o resumo de ações)
-  const mainTable = pickMainTable(tables);
+  let y = 55;
 
-  if (!mainTable) {
-    doc.setFontSize(11);
-    doc.setTextColor(120, 120, 120);
-    doc.text("Nenhuma tabela de ações encontrada no relatório.", marginLeft, 40);
-    doc.save(`Resumo_Acoes_SAEP_${new Date().toISOString().slice(0, 10)}.pdf`);
-    return;
-  }
+  const ensurePageSpace = (requiredHeight: number) => {
+    if (y + requiredHeight > pageHeight - 18) {
+      doc.addPage();
+      y = 20;
+    }
+  };
 
-  // Calcula tamanho de fonte dinâmico para caber em uma página
-  const availableHeight = pageHeight - marginTop - marginBottom - 18 - 6;
-  const rowCount = mainTable.rows.length + 1; // +1 cabeçalho
-  // Estima altura por linha: ~5mm para 8pt, escala proporcional
-  let fontSize = 8;
-  let cellPaddingV = 1.8;
-  const minFontSize = 4.5;
+  blocks.forEach((block) => {
+    if (block.type === "heading") {
+      const fontSize = block.level === 2 ? 12 : block.level === 3 ? 10 : 9;
+      const accentHeight = block.level === 2 ? 7 : 0;
+      doc.setFontSize(fontSize);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(block.level === 2 ? 30 : block.level === 3 ? 37 : 80, block.level === 2 ? 30 : 99, block.level === 2 ? 30 : block.level === 3 ? 235 : 80);
+      const wrapped = doc.splitTextToSize(block.text, block.level === 2 ? contentWidth - 6 : contentWidth);
+      const estimatedHeight = wrapped.length * (block.level === 2 ? 5 : 4.5) + (block.level === 2 ? 6 : 4);
+      ensurePageSpace(estimatedHeight);
 
-  // Iterativamente reduz fonte até caber
-  while (fontSize > minFontSize) {
-    const estimatedRowHeight = fontSize * 0.55 + cellPaddingV * 2;
-    if (rowCount * estimatedRowHeight <= availableHeight) break;
-    fontSize -= 0.3;
-    if (fontSize < 6) cellPaddingV = 1.2;
-    if (fontSize < 5) cellPaddingV = 0.8;
-  }
+      if (block.level === 2) {
+        doc.setFillColor(37, 99, 235);
+        doc.rect(marginLeft, y - 1, 3, accentHeight, "F");
+        doc.text(wrapped, marginLeft + 6, y + 4);
+        y += wrapped.length * 5 + 6;
+      } else {
+        doc.text(wrapped, marginLeft, y + 3);
+        y += wrapped.length * 4.5 + 4;
+      }
 
-  autoTable(doc, {
-    startY: 24,
-    head: [mainTable.headers],
-    body: mainTable.rows,
-    margin: { left: marginLeft, right: marginRight, top: 24, bottom: marginBottom },
-    tableWidth: contentWidth,
-    theme: "grid",
-    pageBreak: "avoid",
-    styles: {
-      font: "helvetica",
-      fontSize,
-      cellPadding: { top: cellPaddingV, right: 1.8, bottom: cellPaddingV, left: 1.8 },
-      overflow: "linebreak",
-      valign: "middle",
-      lineColor: [220, 220, 220],
-      lineWidth: 0.15,
-      minCellHeight: fontSize * 0.55 + cellPaddingV * 2,
-      cellWidth: "wrap",
-    },
-    headStyles: {
-      fillColor: [37, 99, 235],
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
-      fontSize: Math.max(fontSize - 0.2, minFontSize),
-      halign: "left",
-      valign: "middle",
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-    bodyStyles: { textColor: [40, 40, 40] },
-    columnStyles: buildColumnStyles(mainTable.headers, contentWidth),
-    rowPageBreak: "avoid",
-    showHead: "everyPage",
+      return;
+    }
+
+    if (block.type === "table") {
+      const table = tables[block.tableIndex];
+      if (!table) return;
+      ensurePageSpace(24);
+
+      autoTable(doc, {
+        startY: y,
+        head: [table.headers],
+        body: table.rows,
+        margin: { left: marginLeft, right: marginRight },
+        tableWidth: contentWidth,
+        theme: "grid",
+        styles: {
+          font: "helvetica",
+          fontSize: orientation === "landscape" ? 7.2 : 7.6,
+          cellPadding: { top: 2.6, right: 2.4, bottom: 2.6, left: 2.4 },
+          overflow: "linebreak",
+          valign: "middle",
+          lineColor: [220, 220, 220],
+          lineWidth: 0.2,
+          minCellHeight: 7,
+          cellWidth: "wrap",
+        },
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: orientation === "landscape" ? 7.1 : 7.4,
+          halign: "left",
+          valign: "middle",
+        },
+        alternateRowStyles: { fillColor: [245, 247, 250] },
+        bodyStyles: { textColor: [40, 40, 40] },
+        columnStyles: buildColumnStyles(table.headers, contentWidth),
+        rowPageBreak: "avoid",
+        showHead: "everyPage",
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 7;
+      return;
+    }
+
+    if (block.type === "alert") {
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "bold");
+      const wrapped = doc.splitTextToSize(block.text, contentWidth - 8);
+      const boxHeight = wrapped.length * 4.2 + 6;
+      ensurePageSpace(boxHeight + 2);
+
+      if (block.tone === "critical") {
+        doc.setFillColor(255, 240, 240);
+        doc.setDrawColor(200, 80, 80);
+        doc.setTextColor(180, 60, 60);
+      } else if (block.tone === "success") {
+        doc.setFillColor(239, 250, 244);
+        doc.setDrawColor(60, 160, 95);
+        doc.setTextColor(42, 109, 64);
+      } else {
+        doc.setFillColor(239, 246, 255);
+        doc.setDrawColor(59, 130, 246);
+        doc.setTextColor(30, 64, 175);
+      }
+
+      doc.roundedRect(marginLeft, y - 4, contentWidth, boxHeight, 2, 2, "F");
+      doc.setLineWidth(0.6);
+      doc.line(marginLeft, y - 4, marginLeft, y - 4 + boxHeight);
+      doc.text(wrapped, marginLeft + 4, y);
+      y += boxHeight + 2;
+      return;
+    }
+
+    const isList = block.type === "bullet" || block.type === "numbered";
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(60, 60, 60);
+    const wrapped = doc.splitTextToSize(block.text, contentWidth - (isList ? 8 : 0));
+    const textHeight = wrapped.length * 4.2 + 3;
+    ensurePageSpace(textHeight);
+
+    if (block.type === "bullet") {
+      doc.setFillColor(37, 99, 235);
+      doc.circle(marginLeft + 2, y + 0.6, 0.8, "F");
+      doc.text(wrapped, marginLeft + 6, y + 2);
+    } else if (block.type === "numbered") {
+      doc.text(wrapped, marginLeft + 3, y + 2);
+    } else {
+      doc.text(wrapped, marginLeft, y + 2);
+    }
+
+    y += textHeight;
   });
 
-  // Footer compacto
-  doc.setFontSize(6.5);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(150, 150, 150);
-  doc.text(
-    "SENAI Feira de Santana — Plano de Ação SAEP 2026 — Resumo Executivo",
-    marginLeft,
-    pageHeight - 4
-  );
-  doc.text(`${totalAcoes} ações`, pageWidth - marginRight, pageHeight - 4, { align: "right" });
-
-  // Mantém apenas a primeira página caso autoTable tenha criado mais
+  // Footer on all pages
   const totalPages = doc.getNumberOfPages();
-  for (let p = totalPages; p > 1; p--) {
-    doc.deletePage(p);
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(150, 150, 150);
+    doc.text("SENAI Feira de Santana — Plano de Ação SAEP 2026 — Relatório IA", marginLeft, 290);
+    doc.text(`Página ${p} de ${totalPages}`, pageWidth - marginRight, 290, { align: "right" });
   }
 
-  doc.save(`Resumo_Acoes_SAEP_${new Date().toISOString().slice(0, 10)}.pdf`);
-}
-
-/** Escolhe a tabela principal de ações: a que tem mais linhas. */
-function pickMainTable(tables: PdfTable[]): PdfTable | null {
-  if (!tables.length) return null;
-  return tables.reduce((best, current) =>
-    current.rows.length > best.rows.length ? current : best
-  );
+  doc.save(`Relatorio_IA_SAEP_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
