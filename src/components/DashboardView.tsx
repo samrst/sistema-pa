@@ -66,12 +66,11 @@ export default function DashboardView() {
   all.forEach((a) => { byTipo[a.tipo_acao] = (byTipo[a.tipo_acao] || 0) + 1; });
   const tipoData = Object.entries(byTipo).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
 
-  const filterTitle: Record<FilterType, string> = {
+  const filterTitle: Record<NonNullable<FilterType>, string> = {
     total: "Todas as Ações",
     concluidas: "Ações Concluídas",
     emAndamento: "Ações em Andamento",
     atrasadas: "Ações Atrasadas",
-    null: "",
   };
 
   return (
