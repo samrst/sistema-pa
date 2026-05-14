@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { ClipboardList, CheckCircle2, AlertTriangle, Clock, X } from "lucide-react";
+import { ClipboardList, CheckCircle2, AlertTriangle, Clock, X, Pencil, FilterX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import AcaoFormDialog from "@/components/AcaoFormDialog";
+import type { Acao } from "@/hooks/useAcoes";
 
 const PIE_COLORS = [
   "hsl(215, 80%, 48%)",
