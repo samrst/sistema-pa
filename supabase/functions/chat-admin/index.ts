@@ -100,6 +100,57 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    // ─── MULTI-AI CONSULTATION ───
+    // Antes de responder, consultamos modelos diferentes (Gemini Pro + GPT-5 Mini)
+    // para obter perspectivas independentes e gerar uma sintese mais consistente.
+    const lastUser = [...messages].reverse().find((m: any) => m.role === "user")?.content ?? "";
+    const shouldConsult = typeof lastUser === "string" && lastUser.trim().length > 30;
+
+    const consultPrompt = `Voce e um consultor especialista em SAEP, gestao educacional SENAI e planos de acao.
+Forneca uma analise CONCISA (maximo 250 palavras, texto corrido, sem HTML, sem markdown) com:
+- Diagnostico em 2-3 linhas
+- 3 a 5 insights acionaveis
+- 1 ou 2 riscos/oportunidades
+Seja direto, tecnico e baseado em evidencias.`;
+
+    const callModel = async (model: string) => {
+      try {
+        const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: "system", content: consultPrompt }, ...messages],
+          }),
+        });
+        if (!r.ok) return null;
+        const j = await r.json();
+        return j.choices?.[0]?.message?.content ?? null;
+      } catch { return null; }
+    };
+
+    let perspectivesBlock = "";
+    if (shouldConsult) {
+      const [pGemini, pGpt] = await Promise.all([
+        callModel("google/gemini-2.5-pro"),
+        callModel("openai/gpt-5-mini"),
+      ]);
+      const parts: string[] = [];
+      if (pGemini) parts.push(`[PERSPECTIVA A — Gemini 2.5 Pro]\n${pGemini}`);
+      if (pGpt) parts.push(`[PERSPECTIVA B — GPT-5 Mini]\n${pGpt}`);
+      if (parts.length) {
+        perspectivesBlock = `\n\n[CONSULTORIA MULTI-IA — Use estas perspectivas independentes como insumo. Cruze, valide e SINTETIZE em uma resposta unica e coerente. NAO mencione os modelos consultados na resposta final.]\n\n${parts.join("\n\n---\n\n")}`;
+      }
+    }
+
+    const finalMessages = perspectivesBlock
+      ? [
+          { role: "system", content: SYSTEM_PROMPT },
+          ...messages.slice(0, -1),
+          { role: "user", content: String(lastUser) + perspectivesBlock },
+        ]
+      : [{ role: "system", content: SYSTEM_PROMPT }, ...messages];
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -108,10 +159,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...messages,
-        ],
+        messages: finalMessages,
         stream: true,
       }),
     });
