@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { ClipboardList, CheckCircle2, AlertTriangle, Clock, X } from "lucide-react";
+import { ClipboardList, CheckCircle2, AlertTriangle, Clock, X, Pencil, FilterX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import AcaoFormDialog from "@/components/AcaoFormDialog";
+import type { Acao } from "@/hooks/useAcoes";
 
 const PIE_COLORS = [
   "hsl(215, 80%, 48%)",
@@ -27,6 +29,8 @@ export default function DashboardView() {
   const { data: acoes } = useAcoes();
   const all = acoes || [];
   const [activeFilter, setActiveFilter] = useState<FilterType>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editData, setEditData] = useState<Acao | null>(null);
 
   const total = all.length;
   const concluidas = all.filter((a) => a.status === "Concluído").length;
@@ -104,13 +108,23 @@ export default function DashboardView() {
             <CardTitle className="text-base font-heading">
               {filterTitle[activeFilter]} <span className="text-muted-foreground font-normal">({filteredAcoes.length})</span>
             </CardTitle>
-            <button
-              onClick={() => setActiveFilter(null)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              title="Fechar filtro"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveFilter(null)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+                title="Limpar filtro"
+              >
+                <FilterX className="h-3.5 w-3.5" />
+                Limpar filtro
+              </button>
+              <button
+                onClick={() => setActiveFilter(null)}
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
+                title="Fechar"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </CardHeader>
           <CardContent>
             {filteredAcoes.length === 0 ? (
@@ -125,6 +139,7 @@ export default function DashboardView() {
                       <TableHead>Responsável</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Prazo</TableHead>
+                      <TableHead className="w-10 text-center">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -144,6 +159,18 @@ export default function DashboardView() {
                           {acao.data_fim
                             ? new Date(acao.data_fim).toLocaleDateString("pt-BR")
                             : "—"}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <button
+                            onClick={() => {
+                              setEditData(acao);
+                              setEditOpen(true);
+                            }}
+                            className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted"
+                            title="Editar ação"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -220,6 +247,12 @@ export default function DashboardView() {
           </CardContent>
         </Card>
       </div>
+
+      <AcaoFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        editData={editData}
+      />
     </div>
   );
 }
