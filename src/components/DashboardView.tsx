@@ -247,6 +247,12 @@ export default function DashboardView() {
           </CardContent>
         </Card>
       </div>
+
+      <AcaoFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        editData={editData}
+      />
     </div>
   );
 }
