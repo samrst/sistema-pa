@@ -139,6 +139,7 @@ export default function DashboardView() {
                       <TableHead>Responsável</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Prazo</TableHead>
+                      <TableHead className="w-10 text-center">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
