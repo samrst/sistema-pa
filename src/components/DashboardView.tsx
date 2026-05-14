@@ -29,6 +29,8 @@ export default function DashboardView() {
   const { data: acoes } = useAcoes();
   const all = acoes || [];
   const [activeFilter, setActiveFilter] = useState<FilterType>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editData, setEditData] = useState<Acao | null>(null);
 
   const total = all.length;
   const concluidas = all.filter((a) => a.status === "Concluído").length;
