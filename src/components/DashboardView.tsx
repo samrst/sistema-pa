@@ -108,13 +108,23 @@ export default function DashboardView() {
             <CardTitle className="text-base font-heading">
               {filterTitle[activeFilter]} <span className="text-muted-foreground font-normal">({filteredAcoes.length})</span>
             </CardTitle>
-            <button
-              onClick={() => setActiveFilter(null)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              title="Fechar filtro"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveFilter(null)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+                title="Limpar filtro"
+              >
+                <FilterX className="h-3.5 w-3.5" />
+                Limpar filtro
+              </button>
+              <button
+                onClick={() => setActiveFilter(null)}
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
+                title="Fechar"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </CardHeader>
           <CardContent>
             {filteredAcoes.length === 0 ? (
