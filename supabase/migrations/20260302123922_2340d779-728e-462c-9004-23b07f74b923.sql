@@ -6,9 +6,9 @@ CREATE TABLE public.acoes_saep (
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   
   -- 1. Identificação
-  unidade TEXT NOT NULL DEFAULT 'FSA',
+  unidade TEXT NOT NULL,
   curso TEXT NOT NULL,
-  uc_componente TEXT,
+  modalidade TEXT NOT NULL,
   capacidade_saep TEXT NOT NULL,
   
   -- 2. Diagnóstico

@@ -20,7 +20,7 @@ export function exportRelatorioPdf(markdownContent: string, totalAcoes: number) 
   doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("SENAI Feira de Santana", marginLeft, 18);
+  doc.text("SENAI Bahia", marginLeft, 18);
 
   doc.setFontSize(14);
   doc.text("Plano de Ação SAEP 2026", marginLeft, 27);
@@ -171,7 +171,7 @@ export function exportRelatorioPdf(markdownContent: string, totalAcoes: number) 
     doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(150, 150, 150);
-    doc.text("SENAI Feira de Santana — Plano de Ação SAEP 2026 — Relatório IA", marginLeft, 290);
+    doc.text("SENAI Bahia — Plano de Ação SAEP 2026 — Relatório IA", marginLeft, 290);
     doc.text(`Página ${p} de ${totalPages}`, pageWidth - marginRight, 290, { align: "right" });
   }
 

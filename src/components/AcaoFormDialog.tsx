@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { useCreateAcao, useUpdateAcao, type Acao } from "@/hooks/useAcoes";
 import { toast } from "sonner";
 import {
-  CURSOS, CAPACIDADES, TIPOS_ACAO, STATUS_OPTIONS,
+  UNIDADES, CURSOS, MODALIDADE, CAPACIDADES, TIPOS_ACAO, STATUS_OPTIONS,
   CRITICIDADE_OPTIONS, RISCO_OPTIONS, PRIORIDADE_OPTIONS,
   IMPACTO_OPTIONS, APOIOS_OPTIONS,
 } from "@/lib/constants";
@@ -23,9 +23,9 @@ type Props = {
 };
 
 const defaultForm = {
-  unidade: "FSA",
+  unidade: "",
   curso: "",
-  uc_componente: "",
+  modalidade: "",
   capacidade_saep: "",
   problema_identificado: "",
   evidencias: "",
@@ -61,7 +61,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
       setForm({
         unidade: editData.unidade,
         curso: editData.curso,
-        uc_componente: editData.uc_componente || "",
+        modalidade: editData.modalidade,
         capacidade_saep: editData.capacidade_saep,
         problema_identificado: editData.problema_identificado,
         evidencias: editData.evidencias || "",
@@ -103,7 +103,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
   };
 
   const handleSubmit = async () => {
-    if (!form.curso || !form.capacidade_saep || !form.problema_identificado || !form.acao || !form.tipo_acao || !form.responsavel_principal) {
+    if (!form.unidade ||!form.modalidade ||!form.curso || !form.capacidade_saep || !form.problema_identificado || !form.acao || !form.tipo_acao || !form.responsavel_principal) {
       toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
@@ -111,7 +111,6 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
     const payload = {
       ...form,
       custo_estimado: form.custo_estimado ? parseFloat(form.custo_estimado) : null,
-      uc_componente: form.uc_componente || null,
       evidencias: form.evidencias || null,
       meta_objetiva: form.meta_objetiva || null,
       meta_pratica: form.meta_pratica || null,
@@ -141,36 +140,42 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
   };
 
   const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-    <h3 className="text-sm font-heading font-semibold text-primary tracking-wide uppercase mt-4 mb-2">{children}</h3>
+    <h3 className="text-sm font-heading font-bold text-primary tracking-widest uppercase mt-6 mb-3 pb-2 border-b-2 border-primary-light">{children}</h3>
   );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="font-heading text-xl">{editData ? "Editar Ação" : "Nova Ação SAEP"}</DialogTitle>
+        <DialogHeader className="p-6 pb-0 border-b border-border">
+          <DialogTitle className="font-heading text-xl text-primary">{editData ? "Editar Ação" : "Nova Ação SAEP"}</DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh] px-6 pb-6">
           <div className="space-y-3">
             <SectionTitle>1. Identificação</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Unidade</Label>
-                <Input value={form.unidade} onChange={(e) => set("unidade", e.target.value)} />
+                <Label className="text-primary font-semibold">Unidade *</Label>
+                <Select value={form.unidade} onValueChange={(v) => set("unidade", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{UNIDADES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                </Select>
               </div>
               <div>
-                <Label>Curso *</Label>
+                <Label className="text-primary font-semibold">Curso *</Label>
                 <Select value={form.curso} onValueChange={(v) => set("curso", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>{CURSOS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>UC / Componente</Label>
-                <Input value={form.uc_componente} onChange={(e) => set("uc_componente", e.target.value)} />
+                <Label className="text-primary font-semibold">Modalidade *</Label>
+                <Select value={form.modalidade} onValueChange={(v) => set("modalidade", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{MODALIDADE.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                </Select>
               </div>
               <div>
-                <Label>Capacidade SAEP *</Label>
+                <Label className="text-primary font-semibold">Capacidade SAEP *</Label>
                 <Select value={form.capacidade_saep} onValueChange={(v) => set("capacidade_saep", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>{CAPACIDADES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
@@ -178,18 +183,18 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-4" />
             <SectionTitle>2. Diagnóstico</SectionTitle>
             <div>
-              <Label>Problema identificado *</Label>
+              <Label className="text-primary font-semibold">Problema identificado *</Label>
               <Textarea value={form.problema_identificado} onChange={(e) => set("problema_identificado", e.target.value)} rows={2} />
             </div>
             <div>
-              <Label>Evidências / Dados</Label>
+              <Label className="text-primary font-semibold">Evidências / Dados</Label>
               <Textarea value={form.evidencias} onChange={(e) => set("evidencias", e.target.value)} rows={2} placeholder="% acertos, IDAP, resultado SAEP anterior..." />
             </div>
             <div>
-              <Label>Criticidade</Label>
+              <Label className="text-primary font-semibold">Criticidade</Label>
               <Select value={form.classificacao_criticidade} onValueChange={(v) => set("classificacao_criticidade", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{CRITICIDADE_OPTIONS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
@@ -197,44 +202,44 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
             </div>
             <SectionTitle>3. Ação Planejada</SectionTitle>
             <div>
-              <Label>Ação *</Label>
+              <Label className="text-primary font-semibold">Ação *</Label>
               <Textarea value={form.acao} onChange={(e) => set("acao", e.target.value)} rows={2} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Tipo de Ação *</Label>
+                <Label className="text-primary font-semibold">Tipo de Ação *</Label>
                 <Select value={form.tipo_acao} onValueChange={(v) => set("tipo_acao", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>{TIPOS_ACAO.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Entregável</Label>
+                <Label className="text-primary font-semibold">Entregável</Label>
                 <Input value={form.entregavel} onChange={(e) => set("entregavel", e.target.value)} placeholder="Rubrica, relatório, foto..." />
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-4" />
             <SectionTitle>4. Responsáveis</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Responsável principal *</Label>
+                <Label className="text-primary font-semibold">Responsável principal *</Label>
                 <Input value={form.responsavel_principal} onChange={(e) => set("responsavel_principal", e.target.value)} />
               </div>
               <div>
-                <Label>Função / Cargo</Label>
+                <Label className="text-primary font-semibold">Função / Cargo</Label>
                 <Input value={form.funcao_cargo} onChange={(e) => set("funcao_cargo", e.target.value)} />
               </div>
             </div>
             <div>
-              <Label>Co-responsáveis</Label>
+              <Label className="text-primary font-semibold">Co-responsáveis</Label>
               <Input value={form.co_responsaveis} onChange={(e) => set("co_responsaveis", e.target.value)} />
             </div>
             <div>
-              <Label className="mb-2 block">Apoios necessários</Label>
+              <Label className="mb-2 block text-primary font-semibold">Apoios necessários</Label>
               <div className="flex flex-wrap gap-3">
                 {APOIOS_OPTIONS.map((a) => (
-                  <label key={a} className="flex items-center gap-1.5 text-sm">
+                  <label key={a} className="flex items-center gap-1.5 text-sm cursor-pointer hover:text-primary transition-colors">
                     <Checkbox checked={form.apoios_necessarios.includes(a)} onCheckedChange={() => toggleApoio(a)} />
                     {a}
                   </label>
@@ -242,15 +247,15 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-4" />
             <SectionTitle>5. Prazos</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Data de Início</Label>
+                <Label className="text-primary font-semibold">Data de Início</Label>
                 <Input type="date" value={form.data_inicio} onChange={(e) => set("data_inicio", e.target.value)} />
               </div>
               <div>
-                <Label>Data de Fim</Label>
+                <Label className="text-primary font-semibold">Data de Fim</Label>
                 <Input type="date" value={form.data_fim} onChange={(e) => set("data_fim", e.target.value)} />
               </div>
             </div>
@@ -260,32 +265,32 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
               </p>
             )}
 
-            <Separator />
+            <Separator className="my-4" />
             <SectionTitle>6. Acompanhamento</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Status</Label>
+                <Label className="text-primary font-semibold">Status</Label>
                 <Select value={form.status} onValueChange={(v) => set("status", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Risco</Label>
+                <Label className="text-primary font-semibold">Risco</Label>
                 <Select value={form.risco} onValueChange={(v) => set("risco", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{RISCO_OPTIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Prioridade</Label>
+                <Label className="text-primary font-semibold">Prioridade</Label>
                 <Select value={form.prioridade} onValueChange={(v) => set("prioridade", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{PRIORIDADE_OPTIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Impacto SAEP</Label>
+                <Label className="text-primary font-semibold">Impacto SAEP</Label>
                 <Select value={form.impacto_saep} onValueChange={(v) => set("impacto_saep", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{IMPACTO_OPTIONS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
@@ -293,15 +298,15 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
               </div>
             </div>
             <div>
-              <Label>Custo estimado (R$)</Label>
+              <Label className="text-primary font-semibold">Custo estimado (R$)</Label>
               <Input type="number" step="0.01" value={form.custo_estimado} onChange={(e) => set("custo_estimado", e.target.value)} />
             </div>
 
-            <Separator />
+            <Separator className="my-4" />
             <SectionTitle>7. Observações</SectionTitle>
             <Textarea value={form.observacoes} onChange={(e) => set("observacoes", e.target.value)} rows={3} placeholder="Anotações, pontos de atenção, decisões..." />
 
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end gap-2 pt-6 border-t border-border mt-6">
               <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
               <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
                 {editData ? "Salvar" : "Cadastrar"}

@@ -10,10 +10,11 @@ import AcaoFormDialog from "@/components/AcaoFormDialog";
 import type { Acao } from "@/hooks/useAcoes";
 
 const PIE_COLORS = [
-  "hsl(215, 80%, 48%)",
-  "hsl(160, 60%, 42%)",
-  "hsl(38, 92%, 50%)",
-  "hsl(0, 72%, 51%)",
+  "rgb(22, 65, 148)",   
+  "rgb(37, 99, 235)",   
+  "rgb(96, 165, 250)",  
+  "rgb(251, 146, 60)",
+  "rgb(232, 75, 16)",
 ];
 
 const statusColor: Record<string, string> = {
@@ -57,18 +58,43 @@ export default function DashboardView() {
 
   // By curso
   const byCurso: Record<string, number> = {};
-  all.forEach((a) => { byCurso[a.curso.replace("Técnico em ", "")] = (byCurso[a.curso.replace("Técnico em ", "")] || 0) + 1; });
+  all.forEach((a) => {
+    const cursoName = (a.curso || "Não informado").replace("Técnico em ", "");
+    byCurso[cursoName] = (byCurso[cursoName] || 0) + 1;
+  });
   const cursoData = Object.entries(byCurso).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
 
   // By status
   const byStatus: Record<string, number> = {};
-  all.forEach((a) => { byStatus[a.status] = (byStatus[a.status] || 0) + 1; });
+  all.forEach((a) => {
+    const statusName = a.status || "Indefinido";
+    byStatus[statusName] = (byStatus[statusName] || 0) + 1;
+  });
   const statusData = Object.entries(byStatus).map(([name, value]) => ({ name, value }));
 
   // By tipo
   const byTipo: Record<string, number> = {};
-  all.forEach((a) => { byTipo[a.tipo_acao] = (byTipo[a.tipo_acao] || 0) + 1; });
+  all.forEach((a) => {
+    const tipoName = a.tipo_acao || "Outros";
+    byTipo[tipoName] = (byTipo[tipoName] || 0) + 1;
+  });
   const tipoData = Object.entries(byTipo).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+
+  // By unidade (NOVO)
+  const byUnidade: Record<string, number> = {};
+  all.forEach((a) => {
+    const unidadeName = a.unidade || "Não informada";
+    byUnidade[unidadeName] = (byUnidade[unidadeName] || 0) + 1;
+  });
+  const unidadeData = Object.entries(byUnidade).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+
+  // By modalidade (NOVO)
+  const byModalidade: Record<string, number> = {};
+  all.forEach((a) => {
+    const modalidadeName = (a as any).modalidade || "Presencial";
+    byModalidade[modalidadeName] = (byModalidade[modalidadeName] || 0) + 1;
+  });
+  const modalidadeData = Object.entries(byModalidade).map(([name, value]) => ({ name, value }));
 
   const filterTitle: Record<NonNullable<FilterType>, string> = {
     total: "Todas as Ações",
@@ -79,12 +105,13 @@ export default function DashboardView() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Cards Superiores */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <Card
             key={s.key}
             className={cn(
-              "glass-card cursor-pointer transition-all hover:shadow-md",
+              "cursor-pointer transition-all hover:shadow-lg border border-border",
               activeFilter === s.key ? s.activeBg : ""
             )}
             onClick={() => setActiveFilter(activeFilter === s.key ? null : s.key)}
@@ -93,7 +120,7 @@ export default function DashboardView() {
               <div className="flex items-center gap-3">
                 <s.icon className={cn("h-8 w-8", s.color)} />
                 <div>
-                  <p className="text-2xl font-heading font-bold">{s.value}</p>
+                  <p className="text-2xl font-heading font-bold text-primary">{s.value}</p>
                   <p className="text-xs text-muted-foreground">{s.label}</p>
                 </div>
               </div>
@@ -102,16 +129,17 @@ export default function DashboardView() {
         ))}
       </div>
 
+      {/* Tabela de Filtro Ativo */}
       {activeFilter && (
-        <Card className="glass-card animate-fade-in">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-heading">
+        <Card className="border border-border animate-fade-in shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-border">
+            <CardTitle className="text-base font-heading text-primary">
               {filterTitle[activeFilter]} <span className="text-muted-foreground font-normal">({filteredAcoes.length})</span>
             </CardTitle>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveFilter(null)}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-[0.75rem] hover:bg-primary/10"
                 title="Limpar filtro"
               >
                 <FilterX className="h-3.5 w-3.5" />
@@ -119,7 +147,7 @@ export default function DashboardView() {
               </button>
               <button
                 onClick={() => setActiveFilter(null)}
-                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
+                className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-[0.75rem] hover:bg-primary/10"
                 title="Fechar"
               >
                 <X className="h-4 w-4" />
@@ -145,13 +173,15 @@ export default function DashboardView() {
                   <TableBody>
                     {filteredAcoes.map((acao) => (
                       <TableRow key={acao.id}>
-                        <TableCell className="font-medium text-sm max-w-[300px] truncate" title={acao.acao}>
+                        <TableCell className="font-semibold text-sm text-primary max-w-[300px] truncate" title={acao.acao}>
                           {acao.acao}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{acao.curso.replace("Técnico em ", "")}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {(acao.curso || "").replace("Técnico em ", "")}
+                        </TableCell>
                         <TableCell className="text-sm whitespace-nowrap">{acao.responsavel_principal}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={cn("text-xs", statusColor[acao.status] || "")}>
+                          <Badge variant="outline" className={cn("text-xs", statusColor[a.status] || "")}>
                             {acao.status}
                           </Badge>
                         </TableCell>
@@ -166,7 +196,7 @@ export default function DashboardView() {
                               setEditData(acao);
                               setEditOpen(true);
                             }}
-                            className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted"
+                            className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-[0.75rem] hover:bg-primary/10"
                             title="Editar ação"
                           >
                             <Pencil className="h-3.5 w-3.5" />
@@ -182,9 +212,69 @@ export default function DashboardView() {
         </Card>
       )}
 
+      {/* Grid de Gráficos */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="glass-card">
-          <CardHeader><CardTitle className="text-base font-heading">Ações por Curso</CardTitle></CardHeader>
+        {/* Gráfico 1: Ações por Unidade (NOVO - Barras Horizontais) */}
+        <Card className="border border-border shadow-md">
+          <CardHeader className="border-b border-border">
+            <CardTitle className="text-base font-heading text-primary">Ações por Unidade</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {unidadeData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={unidadeData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <XAxis type="number" allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="rgb(22, 65, 148)" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gráfico 2: Ações por Modalidade (NOVO - Pizza/Donut) */}
+        <Card className="border border-border shadow-md">
+          <CardHeader className="border-b border-border">
+            <CardTitle className="text-base font-heading text-primary">Ações por Modalidade</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {modalidadeData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
+            ) : (
+              <div className="flex items-center gap-6">
+                <ResponsiveContainer width="50%" height={220}>
+                  <PieChart>
+                    <Pie data={modalidadeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40}>
+                      {modalidadeData.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="space-y-2">
+                  {modalidadeData.map((m, i) => (
+                    <div key={m.name} className="flex items-center gap-2 text-sm">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                      <span>
+                        {m.name}: <strong className="text-primary">{m.value}</strong>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gráfico 3: Ações por Curso */}
+        <Card className="border border-border shadow-md">
+          <CardHeader className="border-b border-border">
+            <CardTitle className="text-base font-heading text-primary">Ações por Curso</CardTitle>
+          </CardHeader>
           <CardContent>
             {cursoData.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
@@ -194,15 +284,18 @@ export default function DashboardView() {
                   <XAxis type="number" allowDecimals={false} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Bar dataKey="value" fill="hsl(215, 80%, 48%)" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="value" fill="rgb(232, 75, 16)" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
-          <CardHeader><CardTitle className="text-base font-heading">Ações por Status</CardTitle></CardHeader>
+        {/* Gráfico 4: Ações por Status */}
+        <Card className="border border-border shadow-md">
+          <CardHeader className="border-b border-border">
+            <CardTitle className="text-base font-heading text-primary">Ações por Status</CardTitle>
+          </CardHeader>
           <CardContent>
             {statusData.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
@@ -211,7 +304,9 @@ export default function DashboardView() {
                 <ResponsiveContainer width="50%" height={220}>
                   <PieChart>
                     <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40}>
-                      {statusData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                      {statusData.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
                     </Pie>
                     <Tooltip />
                   </PieChart>
@@ -220,7 +315,9 @@ export default function DashboardView() {
                   {statusData.map((s, i) => (
                     <div key={s.name} className="flex items-center gap-2 text-sm">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                      <span>{s.name}: <strong>{s.value}</strong></span>
+                      <span>
+                        {s.name}: <strong className="text-primary">{s.value}</strong>
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -229,8 +326,11 @@ export default function DashboardView() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card lg:col-span-2">
-          <CardHeader><CardTitle className="text-base font-heading">Ações por Tipo</CardTitle></CardHeader>
+        {/* Gráfico 5: Ações por Tipo (Ocupa 2 colunas) */}
+        <Card className="border border-border shadow-md lg:col-span-2">
+          <CardHeader className="border-b border-border">
+            <CardTitle className="text-base font-heading text-primary">Ações por Tipo</CardTitle>
+          </CardHeader>
           <CardContent>
             {tipoData.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
@@ -240,7 +340,7 @@ export default function DashboardView() {
                   <XAxis dataKey="name" angle={-35} textAnchor="end" tick={{ fontSize: 11 }} height={80} />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="value" fill="hsl(160, 60%, 42%)" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="value" fill="rgb(37, 99, 235)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -248,11 +348,7 @@ export default function DashboardView() {
         </Card>
       </div>
 
-      <AcaoFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        editData={editData}
-      />
+      <AcaoFormDialog open={editOpen} onOpenChange={setEditOpen} editData={editData} />
     </div>
   );
 }

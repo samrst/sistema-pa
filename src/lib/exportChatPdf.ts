@@ -98,7 +98,7 @@ function addHeader(doc: jsPDF) {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
-  doc.text("SENAI Feira de Santana", 14, 11);
+  doc.text("SENAI Bahia", 14, 11);
   doc.setFontSize(8.5);
   doc.setFont("helvetica", "normal");
   doc.text("Plano de Acao SAEP 2026 — Relatorio do Agente IA", 14, 18);
@@ -122,7 +122,7 @@ function addFooters(doc: jsPDF) {
     doc.setFontSize(7);
     doc.setTextColor(140, 140, 140);
     doc.text(
-      `SENAI Feira de Santana | Plano de Acao SAEP 2026 | Pagina ${i} de ${total}`,
+      `SENAI Bahia | Plano de Acao SAEP 2026 | Pagina ${i} de ${total}`,
       pw / 2, ph - 7, { align: "center" }
     );
   }

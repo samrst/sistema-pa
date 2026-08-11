@@ -10,18 +10,20 @@ export function exportAcoesPdf(acoes: Acao[]) {
   doc.text("Workshop SAEP 2026 — Plano de Ações", 14, 15);
   doc.setFontSize(9);
   doc.setTextColor(100);
-  doc.text(`SENAI Feira de Santana • Exportado em ${new Date().toLocaleDateString("pt-BR")}`, 14, 21);
+  doc.text(`SENAI Bahia • Exportado em ${new Date().toLocaleDateString("pt-BR")}`, 14, 21);
   doc.setTextColor(0);
 
   // Summary table
   autoTable(doc, {
     startY: 27,
     head: [[
-      "Curso", "Cap.", "Ação", "Problema Identificado", "Tipo", "Responsável",
+      "Unidade", "Curso", "Modalidade", "Cap.", "Ação", "Problema Identificado", "Tipo", "Responsável",
       "Status", "Prioridade", "Início", "Prazo",
     ]],
     body: acoes.map((a) => [
+      a.unidade || "—",
       a.curso.replace("Técnico em ", ""),
+      a.modalidade || "—",
       a.capacidade_saep,
       a.acao,
       a.problema_identificado,
@@ -49,9 +51,10 @@ export function exportAcoesPdf(acoes: Acao[]) {
     y += 8;
 
     const lines: [string, string][] = [
+      ["Unidade", a.unidade || "—"],
       ["Curso", a.curso],
+      ["Modalidade", a.modalidade || "—"],
       ["Capacidade SAEP", a.capacidade_saep],
-      ["UC / Componente", a.uc_componente || "—"],
       ["Problema Identificado", a.problema_identificado],
       ["Evidências", a.evidencias || "—"],
       ["Criticidade", a.classificacao_criticidade || "—"],

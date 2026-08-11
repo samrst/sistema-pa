@@ -42,7 +42,7 @@ export type Database = {
           risco: string | null
           status: string
           tipo_acao: string
-          uc_componente: string | null
+          modalidade: string
           unidade: string
           updated_at: string
         }
@@ -73,7 +73,7 @@ export type Database = {
           risco?: string | null
           status?: string
           tipo_acao: string
-          uc_componente?: string | null
+          modalidade?: string
           unidade?: string
           updated_at?: string
         }
@@ -104,7 +104,7 @@ export type Database = {
           risco?: string | null
           status?: string
           tipo_acao?: string
-          uc_componente?: string | null
+          modalidade?: string
           unidade?: string
           updated_at?: string
         }

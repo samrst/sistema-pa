@@ -1,27 +1,12 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { GoogleGenAI } from "npm:@google/genai";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  try {
-    const { acoes } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
-    if (!acoes || acoes.length === 0) {
-      return new Response(JSON.stringify({ error: "Nenhuma ação para analisar." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const systemPrompt = `Voce e um Consultor Estrategico Senior do SENAI.
+const SYSTEM_PROMPT = `Voce e um Consultor Estrategico Senior do SENAI.
 Sua resposta deve ser um RELATORIO EXECUTIVO em HTML puro.
 
 REGRAS CRITICAS DE FORMATACAO — SIGA RIGOROSAMENTE:
@@ -70,6 +55,31 @@ IMPORTANTE: Responda SEMPRE em HTML puro. NUNCA use Markdown. NUNCA use pipes (|
    - Categorize acoes por tipo
    - Use espacamento generoso entre secoes`;
 
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { acoes } = await req.json();
+
+    const GEMINI_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("LOVABLE_API_KEY nao configurada no Supabase Secrets.");
+    }
+
+    if (!acoes || acoes.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Nenhuma acao para analisar." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
     const userPrompt = `Analise as ${acoes.length} acoes do plano SAEP para viabilidade e cruzamento de dados.
 
 DADOS PARA ANALISE:
@@ -77,40 +87,33 @@ ${JSON.stringify(acoes, null, 2)}
 
 Gere o relatorio executivo completo em HTML puro seguindo as regras do sistema.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+    // Chamada oficial da API do Gemini usando a SDK
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+      config: {
+        systemInstruction: SYSTEM_PROMPT,
         temperature: 0.2,
-      }),
+      },
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("AI gateway error:", response.status, text);
-      throw new Error("Erro na comunicação com o agente de IA");
-    }
+    const content =
+      response.text || "<p>Nao foi possivel gerar a analise.</p>";
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "Não foi possível gerar a análise.";
-
+    // Retorna a chave "analise" exatamente como o seu frontend espera
     return new Response(JSON.stringify({ analise: content }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-
   } catch (e) {
     console.error("analyze-acoes error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error: e instanceof Error ? e.message : "Erro desconhecido",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });

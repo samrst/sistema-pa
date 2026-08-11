@@ -1,0 +1,158 @@
+@font-face{
+    font-family:"Neo Sans Pro";
+    src:url("/FONTS/NeoSansProItalic.OTF") format("opentype");
+    font-weight:400;
+    font-style:italic;
+}
+
+@font-face{
+    font-family:"Neo Sans Pro";
+    src:url("/FONTS/NeoSansProBlackIt.OTF") format("opentype");
+    font-weight:700;
+    font-style:italic;
+}
+
+header{
+    overflow:hidden;
+}
+
+.saep-nav{
+    background:#164194;
+    border-bottom:4px solid #3D67B6;
+    height:60px;
+    padding:0 2.5rem;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:relative;
+}
+
+.saep-logo{
+    width: 100px;
+}
+
+.saep-title{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    color:white;
+    font-family:"Neo Sans Pro";
+    font-weight:700;
+    font-style:italic;
+    font-size:24px;
+}
+
+.saep-menu{
+    display:flex;
+    align-items:center;
+    gap:2rem;
+    list-style:none;
+}
+
+.saep-menu a{
+    color:#d9e6f7;
+    text-decoration:none;
+    font-family:"Neo Sans Pro";
+    font-style:italic;
+    transition:.3s;
+}
+
+.saep-menu a:hover{
+    color:white;
+}
+
+.saep-hero{
+    background:linear-gradient(
+        135deg,
+        #164194 0%,
+        #3D67B6 50%,
+        #0F2E69 100%
+    );
+
+    text-align:center;
+    color:white;
+    padding:5rem 2rem;
+}
+
+.saep-eyebrow{
+    text-transform:uppercase;
+    letter-spacing:3px;
+    color:#d9e6f7;
+    font-size:12px;
+    margin-bottom: 1rem;
+    font-family:"Neo Sans Pro";
+    font-style:italic;
+}
+
+.saep-hero h1{
+    font-family:"Neo Sans Pro";
+    font-style:italic;
+    font-weight:700;
+    font-size: 56px;
+    margin-bottom: 1rem;
+}
+
+.saep-hero p{
+    max-width:600px;
+    margin:auto;
+    color:#d9e6f7;
+    font-family:"Neo Sans Pro";
+    font-style:italic;
+}
+
+.body-section{
+    background:#F7F9FC;
+
+    margin-top:-18px;
+
+    border-top-left-radius:24px;
+    border-top-right-radius:24px;
+
+    position:relative;
+    z-index:5;
+
+    padding:10px 0 10px;
+    
+}
+
+.dropdown{
+    position:relative;
+}
+
+.dropdown-menu{
+    display:none;
+    position:absolute;
+    top:100%;
+    left:0;
+    background:#164194;
+    min-width:180px;
+    list-style:none;
+    border-radius:8px;
+    padding:.5rem 0;
+    box-shadow:0 8px 20px rgba(0,0,0,.2);
+    z-index:100;
+}
+
+.dropdown:hover .dropdown-menu{
+    display:block;
+}
+
+.dropdown-menu a{
+    display:block;
+    padding:.7rem 1rem;
+}
+
+.dropdown-menu a:hover{
+    background:#0F2E69;
+}
+
+@media(max-width:900px){
+
+    .saep-title{
+        display:none;
+    }
+
+    .saep-menu{
+        display:none;
+    }
+}

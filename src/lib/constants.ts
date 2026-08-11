@@ -1,6 +1,21 @@
+export const UNIDADES = [
+  "Geral",
+  "SENAI Alagoinhas",
+  "SENAI Barreiras",
+  "SENAI Camaçari",
+  "SENAI CIMATEC",
+  "SENAI Dendezeiros",
+  "SENAI Feira de Santana",
+  "SENAI Ilhéus",
+  "SENAI Juazeiro",
+  "SENAI Lauro de Freitas",
+  "SENAI Luís Eduardo Magalhães",
+  "SENAI Vitória da Conquista",
+  "SENAI Teixeira de Freitas",
+] as const;
+
 export const CURSOS = [
-  "Escola",
-  "Semi Presencial",
+  "Geral",
   "Técnico em Eletromecânica",
   "Técnico em Manutenção Automotiva",
   "Técnico em Eletrotécnica",
@@ -15,6 +30,12 @@ export const CURSOS = [
 
 export const CAPACIDADES = [
   "Capacidades Socioemocionais", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10","Outras",
+] as const;
+
+export const MODALIDADE = [
+  "Geral",
+  "Presencial",
+  "Semipresencial",
 ] as const;
 
 export const TIPOS_ACAO = [

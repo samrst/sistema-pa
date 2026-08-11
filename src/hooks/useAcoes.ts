@@ -8,7 +8,7 @@ export type Acao = {
   updated_at: string;
   unidade: string;
   curso: string;
-  uc_componente: string | null;
+  modalidade: string;
   capacidade_saep: string;
   problema_identificado: string;
   evidencias: string | null;

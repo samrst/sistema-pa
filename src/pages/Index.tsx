@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, TableProperties, ClipboardCheck, BrainCircuit, ShieldCheck, LogOut, MessageSquare } from "lucide-react";
+import { LayoutDashboard, TableProperties, ClipboardCheck, BrainCircuit, ShieldCheck, LogOut, MessageSquare, FileDown } from "lucide-react";
 import AcoesTable from "@/components/AcoesTable";
 import DashboardView from "@/components/DashboardView";
 import ChecklistView from "@/components/ChecklistView";
@@ -9,6 +9,12 @@ import AdminLogin from "@/components/AdminLogin";
 import AdminChat from "@/components/AdminChat";
 import { useAcoes } from "@/hooks/useAcoes";
 import { Button } from "@/components/ui/button";
+import { CircleHelp } from "lucide-react";
+import "@/styles/header.css";
+import "@/styles/footer.css";
+import "@/styles/help-button.css";
+import { exportAcoesPdf } from "@/lib/exportPdf";
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></link>
 
 const Index = () => {
   const [tab, setTab] = useState("acoes");
@@ -18,39 +24,79 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container flex items-center justify-between h-16 px-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-heading font-bold text-sm">SAEP</span>
-            </div>
-            <div>
-              <h1 className="font-heading font-bold text-lg leading-tight">Workshop SAEP 2026</h1>
-              <p className="text-xs text-muted-foreground">Plano de Ações — SENAI FEIRA DE SANTANA</p>
-            </div>
-          </div>
-          <div>
+<header>
+
+    <nav className="saep-nav">
+
+        <a href="/">
+            <img
+                src="/IMG/logo-senai.png"
+                alt="Logo SENAI"
+                className="saep-logo"
+            />
+        </a>
+
+        <h2 className="saep-title">
+            SENAI | SAEP
+        </h2>
+
+        <ul className="flex items-center gap-2 ml-auto">
+          <li>
+            <Button
+              onClick={() => exportAcoesPdf(acoes || [])}
+              disabled={!acoes || acoes.length === 0}
+              className="bg-white/15 text-white border border-white/25 px-[18px] py-[10px] rounded-[8px] font-['Neo_Sans_Pro',sans-serif] italic text-[14px] font-semibold transition-all duration-300 ease-in-out hover:bg-white/25 hover:-translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              <FileDown className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </Button>
+          </li>
+
+          <li>
             {isAdmin ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-success flex items-center gap-1">
-                  <ShieldCheck className="h-3.5 w-3.5" /> Admin
-                </span>
-                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setIsAdmin(false)}>
-                  <LogOut className="h-3.5 w-3.5 mr-1" /> Sair
-                </Button>
-              </div>
+              <Button
+                onClick={() => setIsAdmin(false)}
+                className="bg-white/15 text-white border border-white/25 px-[18px] py-[10px] rounded-[8px] font-sans text-[14px] font-semibold transition-all duration-300 ease-in-out hover:bg-white/25 hover:-translate-y-[2px]"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </Button>
             ) : (
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => setLoginOpen(true)} title="Acesso administrativo">
-                <ShieldCheck className="h-5 w-5" />
+              <Button
+                onClick={() => setLoginOpen(true)}
+                className="bg-white/15 text-white border border-white/25 px-[18px] py-[10px] rounded-[8px] font-sans text-[14px] font-semibold transition-all duration-300 ease-in-out hover:bg-white/25 hover:-translate-y-[2px]"
+                title="Área Administrativa"
+              >
+                <ShieldCheck className="h-4 w-4" />
               </Button>
             )}
-          </div>
-        </div>
-      </header>
+          </li>
+        </ul>
 
-      <main className="container px-4 py-6">
+    </nav>
+
+    <section className="saep-hero">
+
+        <p className="saep-eyebrow">
+            PLATAFORMA INTERNA
+        </p>
+
+        <h1>
+            Workshop SAEP 2026
+        </h1>
+
+        <p>
+            Plataforma para gestão, acompanhamento e análise das ações do SAEP.
+        </p>
+
+    </section>
+
+</header>
+    <section className="body-section"></section>
+
+      <main className="container mx-auto px-4 py-8">
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="mb-6">
+          <TabsList className="mb-8">
             <TabsTrigger value="acoes" className="gap-1.5">
               <TableProperties className="h-4 w-4" /> Ações
             </TabsTrigger>
@@ -88,7 +134,23 @@ const Index = () => {
             </TabsContent>
           )}
         </Tabs>
+
+    <a href="https://sistemasaep.netlify.app/contato" className="help-button" aria-label="Central de Ajuda" title="Central de Ajuda">
+        <CircleHelp className="h-6 w-6" />
+        <span className="help-text">Ajuda</span>
+    </a>
+    
       </main>
+
+    <div className="container">
+    <div className="container"><div className="container">
+        <section className ="portal-banner">
+            <img src="./IMG/banner-saep.png" alt="Portal de Sistemas SAEP" />
+        </section>
+    </div></div></div>
+    <footer>
+        <p>© 2026 SENAI — Uso interno restrito</p>
+    </footer>
 
       <AdminLogin open={loginOpen} onOpenChange={setLoginOpen} onSuccess={() => setIsAdmin(true)} />
     </div>

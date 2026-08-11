@@ -251,11 +251,11 @@ const AdminChat = () => {
     <div className="w-full max-w-4xl mx-auto flex flex-col h-[calc(100vh-12rem)]">
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border mb-4">
-        <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
+        <div className="p-2.5 bg-primary/10 rounded-[0.75rem] text-primary">
           <BrainCircuit size={24} />
         </div>
         <div>
-          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-base font-heading font-bold text-primary flex items-center gap-2">
             Agente IA — Assessoria Estratégica
             <Sparkles size={14} className="text-primary" />
           </h2>
@@ -267,7 +267,7 @@ const AdminChat = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="ml-auto text-xs text-muted-foreground"
+            className="ml-auto text-xs text-muted-foreground hover:text-primary"
             onClick={() => setMessages([])}
           >
             <Trash2 size={14} className="mr-1" /> Limpar
@@ -279,7 +279,7 @@ const AdminChat = () => {
       <div className="flex-1 overflow-y-auto space-y-4 pr-1">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-6 text-center px-4">
-            <div className="p-4 bg-primary/5 rounded-2xl">
+            <div className="p-4 bg-primary-soft rounded-[0.875rem]">
               <BrainCircuit size={40} className="text-primary/40" />
             </div>
             <div>
@@ -293,7 +293,7 @@ const AdminChat = () => {
                 <button
                   key={i}
                   onClick={() => send(s)}
-                  className="text-left text-xs p-3 rounded-xl border border-border bg-card hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                  className="text-left text-xs p-3 rounded-[0.875rem] border border-border bg-card hover:bg-primary/5 transition-colors text-muted-foreground hover:text-primary"
                 >
                   {s}
                 </button>
@@ -304,7 +304,7 @@ const AdminChat = () => {
           messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${
+                className={`max-w-[85%] rounded-[0.875rem] px-4 py-3 text-sm ${
                   m.role === "user"
                     ? "bg-primary text-primary-foreground rounded-br-md"
                     : "bg-muted text-foreground rounded-bl-md"
@@ -327,7 +327,7 @@ const AdminChat = () => {
         )}
         {isLoading && messages[messages.length - 1]?.role === "user" && (
           <div className="flex justify-start">
-            <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+            <div className="bg-muted rounded-[0.875rem] rounded-bl-md px-4 py-3">
               <Loader2 size={16} className="animate-spin text-muted-foreground" />
             </div>
           </div>
@@ -339,7 +339,7 @@ const AdminChat = () => {
       {attachedFiles.length > 0 && (
         <div className="flex flex-wrap gap-2 pt-2 px-1">
           {attachedFiles.map((f, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-xs bg-muted rounded-lg px-2.5 py-1.5 border border-border">
+            <div key={i} className="flex items-center gap-1.5 text-xs bg-muted rounded-[0.75rem] px-2.5 py-1.5 border border-border">
               <FileText size={12} className="text-primary shrink-0" />
               <span className="truncate max-w-[120px]">{f.name}</span>
               <button onClick={() => removeFile(i)} className="text-muted-foreground hover:text-destructive transition-colors">
@@ -389,14 +389,14 @@ const AdminChat = () => {
             onKeyDown={handleKeyDown}
             placeholder={isListening ? "🎙️ Ouvindo... fale agora" : "Digite sua mensagem..."}
             className="resize-none min-h-[44px] max-h-[120px] text-sm"
-            rows={1}
-            disabled={isLoading}
           />
+
           <Button
-            onClick={() => send(input)}
-            disabled={(!input.trim() && attachedFiles.length === 0) || isLoading}
             size="icon"
             className="shrink-0 h-[44px] w-[44px]"
+            onClick={() => send(input)}
+            disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
+            title="Enviar mensagem"
           >
             {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </Button>
