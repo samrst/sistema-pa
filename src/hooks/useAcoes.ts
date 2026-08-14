@@ -1,6 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    const message = payload?.error || payload?.message || `Erro na requisição: ${response.status}`;
+    throw new Error(message);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json() as Promise<T>;
+}
 
 export type Acao = {
   id: string;
@@ -37,24 +59,18 @@ export type Acao = {
 export function useAcoes() {
   return useQuery({
     queryKey: ["acoes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("acoes_saep")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Acao[];
-    },
+    queryFn: async () => apiFetch<Acao[]>("/api/acoes"),
   });
 }
 
 export function useCreateAcao() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (acao: TablesInsert<"acoes_saep">) => {
-      const { data, error } = await supabase.from("acoes_saep").insert(acao).select().single();
-      if (error) throw error;
-      return data;
+    mutationFn: async (acao: Partial<Acao> & Record<string, any>) => {
+      return apiFetch<Acao>("/api/acoes", {
+        method: "POST",
+        body: JSON.stringify(acao),
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["acoes"] }),
   });
@@ -63,10 +79,11 @@ export function useCreateAcao() {
 export function useUpdateAcao() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: TablesUpdate<"acoes_saep"> & { id: string }) => {
-      const { data, error } = await supabase.from("acoes_saep").update(updates).eq("id", id).select().single();
-      if (error) throw error;
-      return data;
+    mutationFn: async ({ id, ...updates }: Partial<Acao> & { id: string }) => {
+      return apiFetch<Acao>(`/api/acoes/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(updates),
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["acoes"] }),
   });
@@ -76,8 +93,7 @@ export function useDeleteAcao() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("acoes_saep").delete().eq("id", id);
-      if (error) throw error;
+      return apiFetch<void>(`/api/acoes/${id}`, { method: "DELETE" });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["acoes"] }),
   });

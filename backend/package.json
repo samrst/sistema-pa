@@ -1,0 +1,23 @@
+{
+  "name": "sistema-pa-backend",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p .",
+    "start": "node dist/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate"
+  },
+  "dependencies": {
+    "fastify": "^4.29.1",
+    "@prisma/client": "^5.12.0",
+    "@google/generative-ai": "^0.21.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.12.0",
+    "typescript": "^5.8.3",
+    "tsx": "^3.13.0"
+  }
+}

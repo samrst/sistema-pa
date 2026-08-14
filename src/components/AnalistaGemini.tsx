@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { BrainCircuit, Sparkles, Loader2, ClipboardList, FileText, RotateCcw, Download } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import DOMPurify from "dompurify";
 import { exportRelatorioPdf } from "@/lib/exportRelatorioPdf";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 const SANITIZE_CONFIG = {
   ALLOWED_TAGS: [
@@ -30,11 +31,20 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
 
     setCarregando(true);
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-acoes', {
-        body: { acoes: dadosAcoes },
+      const response = await fetch(`${API_BASE_URL}/api/ia/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ acoes: dadosAcoes }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
       if (data?.error) throw new Error(data.error);
 
       setAnalise(data.analise);
