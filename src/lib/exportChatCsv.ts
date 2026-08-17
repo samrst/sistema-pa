@@ -1,8 +1,48 @@
 /**
- * Extract markdown tables from AI response and export as CSV (semicolon-separated).
+ * Extract HTML or Markdown tables from AI response and export as CSV (semicolon-separated).
  */
 function extractTables(content: string): { headers: string[]; rows: string[][] }[] {
   const tables: { headers: string[]; rows: string[][] }[] = [];
+
+  // 1. Try extracting HTML tables if present
+  if (typeof DOMParser !== "undefined" && content.includes("<table")) {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(`<div>${content}</div>`, "text/html");
+      doc.querySelectorAll("table").forEach((table) => {
+        const headers: string[] = [];
+        table.querySelectorAll("thead th, thead td, tr:first-child th").forEach((th) => {
+          headers.push((th.textContent || "").trim());
+        });
+
+        const rows: string[][] = [];
+        const bodyRows = table.querySelectorAll("tbody tr");
+        const targetRows = bodyRows.length > 0 ? bodyRows : table.querySelectorAll("tr:not(:first-child)");
+
+        targetRows.forEach((tr) => {
+          const row: string[] = [];
+          tr.querySelectorAll("td, th").forEach((cell) => {
+            row.push((cell.textContent || "").trim());
+          });
+          if (row.length > 0 && row.some((c) => c !== "")) {
+            rows.push(row);
+          }
+        });
+
+        if (headers.length > 0 && rows.length > 0) {
+          tables.push({ headers, rows });
+        }
+      });
+
+      if (tables.length > 0) {
+        return tables;
+      }
+    } catch {
+      // Fallback to markdown parser below
+    }
+  }
+
+  // 2. Fallback: Parse Markdown tables with pipes (|)
   const lines = content.split("\n");
   let i = 0;
 

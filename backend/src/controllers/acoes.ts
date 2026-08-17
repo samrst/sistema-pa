@@ -15,6 +15,7 @@ function normalizeOptionalDate(value: unknown): Date | null {
 }
 
 function normalizePayload(payload: any) {
+  if (!payload || typeof payload !== 'object') return {};
   const normalized = { ...payload };
 
   const dateFields = ['meta_prazo', 'data_inicio', 'data_fim'];
@@ -24,8 +25,13 @@ function normalizePayload(payload: any) {
     }
   }
 
-  if (normalized.custo_estimado !== undefined && normalized.custo_estimado !== null && normalized.custo_estimado !== '') {
-    normalized.custo_estimado = Number(normalized.custo_estimado);
+  if ('custo_estimado' in normalized) {
+    if (normalized.custo_estimado === null || normalized.custo_estimado === undefined || normalized.custo_estimado === '') {
+      normalized.custo_estimado = null;
+    } else {
+      const num = Number(normalized.custo_estimado);
+      normalized.custo_estimado = Number.isNaN(num) ? null : num;
+    }
   }
 
   if (normalized.apoios_necessarios !== undefined && normalized.apoios_necessarios !== null && !Array.isArray(normalized.apoios_necessarios)) {

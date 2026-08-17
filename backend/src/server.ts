@@ -10,9 +10,14 @@ const ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 async function buildServer() {
   const fastify = Fastify({ logger: true });
 
-  // Basic CORS handling without external plugin
+  // CORS handling
   fastify.addHook('onRequest', async (request, reply) => {
-    reply.header('Access-Control-Allow-Origin', ORIGIN);
+    const reqOrigin = request.headers.origin;
+    const allowed = reqOrigin && (reqOrigin.includes('localhost') || reqOrigin.includes('127.0.0.1'))
+      ? reqOrigin
+      : ORIGIN;
+
+    reply.header('Access-Control-Allow-Origin', allowed);
     reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     reply.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     if (request.method === 'OPTIONS') {

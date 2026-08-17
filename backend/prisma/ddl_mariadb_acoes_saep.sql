@@ -1,9 +1,60 @@
--- DDL for MariaDB equivalent of public.acoes_saep (do NOT execute yet)
-CREATE TABLE `acoes_saep` (
+-- ==============================================================================
+-- DDL MariaDB — Sistema PA: Modelos de Usuários, Unidades, Permissões e Ações SAEP
+-- Compatível com MariaDB 10.x+ / utf8mb4
+-- ==============================================================================
+
+-- 1. Tabela de Usuários
+CREATE TABLE IF NOT EXISTS `usuarios` (
+  `id` CHAR(36) NOT NULL PRIMARY KEY,
+  `nome` VARCHAR(150) NOT NULL,
+  `email` VARCHAR(191) NOT NULL UNIQUE,
+  `senha_hash` VARCHAR(255) NOT NULL,
+  `perfil` ENUM('ADMIN', 'MACROPROCESSO_TECNICO', 'USUARIO') NOT NULL,
+  `ativo` BOOLEAN NOT NULL DEFAULT TRUE,
+  `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
+)
+CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+-- 2. Tabela de Unidades Oficiais
+CREATE TABLE IF NOT EXISTS `unidades` (
+  `id` CHAR(36) NOT NULL PRIMARY KEY,
+  `nome` VARCHAR(150) NOT NULL UNIQUE,
+  `codigo` VARCHAR(50) DEFAULT NULL UNIQUE,
+  `ativo` BOOLEAN NOT NULL DEFAULT TRUE,
+  `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
+)
+CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+-- 3. Tabela Pivot N:N entre Usuários e Unidades
+CREATE TABLE IF NOT EXISTS `usuario_unidades` (
+  `id` CHAR(36) NOT NULL PRIMARY KEY,
+  `usuario_id` CHAR(36) NOT NULL,
+  `unidade_id` CHAR(36) NOT NULL,
+  `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  UNIQUE KEY `uk_usuario_unidade` (`usuario_id`, `unidade_id`),
+  INDEX `idx_usuario_unidades_usuario` (`usuario_id`),
+  INDEX `idx_usuario_unidades_unidade` (`unidade_id`),
+  CONSTRAINT `fk_usuario_unidades_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_usuario_unidades_unidade` FOREIGN KEY (`unidade_id`) REFERENCES `unidades` (`id`) ON DELETE CASCADE
+)
+CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+-- 4. Tabela de Ações SAEP (com relacionamentos opcionais preservando histórico)
+CREATE TABLE IF NOT EXISTS `acoes_saep` (
   `id` CHAR(36) NOT NULL PRIMARY KEY,
   `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
 
+  -- Chaves estrangeiras opcionais
+  `unidade_id` CHAR(36) DEFAULT NULL,
+  `usuario_criador_id` CHAR(36) DEFAULT NULL,
+
+  -- Campo textual mantido para compatibilidade retroativa
   `unidade` TEXT NOT NULL,
   `curso` TEXT NOT NULL,
   `modalidade` TEXT NOT NULL,
@@ -35,17 +86,12 @@ CREATE TABLE `acoes_saep` (
   `custo_estimado` DECIMAL(12,2) DEFAULT NULL,
   `prioridade` TEXT DEFAULT 'Média',
   `impacto_saep` TEXT DEFAULT 'Médio',
-  `observacoes` TEXT DEFAULT NULL
+  `observacoes` TEXT DEFAULT NULL,
+
+  INDEX `idx_acoes_saep_unidade_id` (`unidade_id`),
+  INDEX `idx_acoes_saep_usuario_criador_id` (`usuario_criador_id`),
+  CONSTRAINT `fk_acoes_saep_unidade` FOREIGN KEY (`unidade_id`) REFERENCES `unidades` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_acoes_saep_usuario_criador` FOREIGN KEY (`usuario_criador_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL
 )
 CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_unicode_ci;
-
--- Notes:
--- * `id` stored as CHAR(36) to preserve existing UUID strings (e.g. 'xxxxxxxx-xxxx-...').
--- * `apoios_necessarios` stored as JSON. If later queries require relational searches by element, consider a separate linking table.
--- * Timezone: MariaDB DATETIME does not store timezone; store UTC values from the application layer.
-
--- Notes:
--- * `id` stored as CHAR(36)` to preserve existing UUID strings (e.g. 'xxxxxxxx-xxxx-...').
--- * `apoios_necessarios` stored as JSON. If later queries require relational searches by element, consider a separate linking table.
--- * Timezone: MariaDB DATETIME does not store timezone; store UTC values from the application layer.

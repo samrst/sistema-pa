@@ -3,48 +3,112 @@ generator client {
 }
 
 datasource db {
-  // Use MariaDB/MySQL provider for Prisma. Set DATABASE_URL in backend .env
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
+enum Perfil {
+  ADMIN
+  MACROPROCESSO_TECNICO
+  USUARIO
+}
+
+model Usuario {
+  id               String           @id @default(uuid()) @db.Char(36)
+  nome             String           @db.VarChar(150)
+  email            String           @unique @db.VarChar(191)
+  senha_hash       String           @db.VarChar(255)
+  perfil           Perfil
+  ativo            Boolean          @default(true)
+  created_at       DateTime         @default(now()) @db.DateTime(6)
+  updated_at       DateTime         @updatedAt @db.DateTime(6)
+
+  // Relacionamentos
+  unidades         UsuarioUnidade[]
+  acoes_criadas    AcoesSaep[]
+
+  @@map("usuarios")
+}
+
+model Unidade {
+  id               String           @id @default(uuid()) @db.Char(36)
+  nome             String           @unique @db.VarChar(150)
+  codigo           String?          @unique @db.VarChar(50)
+  ativo            Boolean          @default(true)
+  created_at       DateTime         @default(now()) @db.DateTime(6)
+  updated_at       DateTime         @updatedAt @db.DateTime(6)
+
+  // Relacionamentos
+  usuarios         UsuarioUnidade[]
+  acoes            AcoesSaep[]
+
+  @@map("unidades")
+}
+
+model UsuarioUnidade {
+  id               String           @id @default(uuid()) @db.Char(36)
+  usuario_id       String           @db.Char(36)
+  unidade_id       String           @db.Char(36)
+  created_at       DateTime         @default(now()) @db.DateTime(6)
+
+  // Relacionamentos
+  usuario          Usuario          @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  unidade          Unidade          @relation(fields: [unidade_id], references: [id], onDelete: Cascade)
+
+  @@unique([usuario_id, unidade_id])
+  @@index([usuario_id])
+  @@index([unidade_id])
+  @@map("usuario_unidades")
+}
+
 model AcoesSaep {
-  id                        String   @id @db.Char(36) @default(uuid())
-  created_at                DateTime @default(now()) @db.DateTime(6)
-  updated_at                DateTime @updatedAt @db.DateTime(6)
+  id                        String    @id @default(uuid()) @db.Char(36)
+  created_at                DateTime  @default(now()) @db.DateTime(6)
+  updated_at                DateTime  @updatedAt @db.DateTime(6)
 
-  unidade                   String   @db.Text
-  curso                     String   @db.Text
-  modalidade                String   @db.Text
-  capacidade_saep           String   @db.Text
+  // Novos campos relacionais opcionais
+  unidade_id                String?   @db.Char(36)
+  usuario_criador_id        String?   @db.Char(36)
 
-  problema_identificado     String   @db.Text
-  evidencias                String?  @db.Text
-  classificacao_criticidade String?  @default("Adequado") @db.Text
+  // Campo textual mantido para compatibilidade com dados e código legado
+  unidade                   String    @db.Text
+  curso                     String    @db.Text
+  modalidade                String    @db.Text
+  capacidade_saep           String    @db.Text
 
-  meta_objetiva             String?  @db.Text
-  meta_pratica              String?  @db.Text
+  problema_identificado     String    @db.Text
+  evidencias                String?   @db.Text
+  classificacao_criticidade String?   @default("Adequado") @db.Text
+
+  meta_objetiva             String?   @db.Text
+  meta_pratica              String?   @db.Text
   meta_prazo                DateTime? @db.Date
 
-  acao                      String   @db.Text
-  tipo_acao                 String   @db.Text
-  entregavel                String?  @db.Text
+  acao                      String    @db.Text
+  tipo_acao                 String    @db.Text
+  entregavel                String?   @db.Text
 
-  responsavel_principal     String   @db.Text
-  funcao_cargo              String?  @db.Text
-  co_responsaveis           String?  @db.Text
+  responsavel_principal     String    @db.Text
+  funcao_cargo              String?   @db.Text
+  co_responsaveis           String?   @db.Text
   apoios_necessarios        Json?
 
   data_inicio               DateTime? @db.Date
   data_fim                  DateTime? @db.Date
 
-  status                    String   @default("Não iniciado") @db.Text
-  risco                     String?  @default("Baixo") @db.Text
-  plano_mitigacao           String?  @db.Text
-  custo_estimado            Decimal? @db.Decimal(12,2)
-  prioridade                String?  @default("Média") @db.Text
-  impacto_saep              String?  @default("Médio") @db.Text
-  observacoes               String?  @db.Text
+  status                    String    @default("Não iniciado") @db.Text
+  risco                     String?   @default("Baixo") @db.Text
+  plano_mitigacao           String?   @db.Text
+  custo_estimado            Decimal?  @db.Decimal(12, 2)
+  prioridade                String?   @default("Média") @db.Text
+  impacto_saep              String?   @default("Médio") @db.Text
+  observacoes               String?   @db.Text
 
+  // Relações
+  unidade_rel               Unidade?  @relation(fields: [unidade_id], references: [id], onDelete: SetNull)
+  usuario_criador           Usuario?  @relation(fields: [usuario_criador_id], references: [id], onDelete: SetNull)
+
+  @@index([unidade_id])
+  @@index([usuario_criador_id])
   @@map("acoes_saep")
 }

@@ -171,8 +171,9 @@ export function exportRelatorioPdf(markdownContent: string, totalAcoes: number) 
     doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(150, 150, 150);
-    doc.text("SENAI Bahia — Plano de Ação SAEP 2026 — Relatório IA", marginLeft, 290);
-    doc.text(`Página ${p} de ${totalPages}`, pageWidth - marginRight, 290, { align: "right" });
+    const footerY = pageHeight - 8;
+    doc.text("SENAI Bahia — Plano de Ação SAEP 2026 — Relatório IA", marginLeft, footerY);
+    doc.text(`Página ${p} de ${totalPages}`, pageWidth - marginRight, footerY, { align: "right" });
   }
 
   doc.save(`Relatorio_IA_SAEP_${new Date().toISOString().slice(0, 10)}.pdf`);

@@ -129,9 +129,9 @@ export default function AcoesTable({ isAdmin = false }: AcoesTableProps) {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhuma ação encontrada.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhuma ação encontrada.</TableCell></TableRow>
             ) : (
               filtered.map((a) => (
                 <TableRow key={a.id} className="hover:bg-primary/5 transition-colors duration-200">

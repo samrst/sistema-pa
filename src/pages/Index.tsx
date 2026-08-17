@@ -155,14 +155,13 @@ const Index = () => {
     
       </main>
 
-    <div className="container">
-    <div className="container"><div className="container">
-        <section className ="portal-banner">
-            <img src="./IMG/banner-saep.png" alt="Portal de Sistemas SAEP" />
-        </section>
-    </div></div></div>
+    <div className="container mx-auto px-4">
+      <section className="portal-banner my-6">
+        <img src="/IMG/banner-saep.png" alt="Portal de Sistemas SAEP" />
+      </section>
+    </div>
     <footer>
-        <p>© 2026 SENAI — Uso interno restrito</p>
+      <p>© 2026 SENAI — Uso interno restrito</p>
     </footer>
 
       <AdminLogin open={loginOpen} onOpenChange={setLoginOpen} onSuccess={handleLoginSuccess} />

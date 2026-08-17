@@ -56,6 +56,11 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
   const createMutation = useCreateAcao();
   const updateMutation = useUpdateAcao();
 
+  const formatDateForInput = (dateVal?: string | null) => {
+    if (!dateVal) return "";
+    return dateVal.includes("T") ? dateVal.split("T")[0] : dateVal;
+  };
+
   useEffect(() => {
     if (editData) {
       setForm({
@@ -68,7 +73,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
         classificacao_criticidade: editData.classificacao_criticidade || "Adequado",
         meta_objetiva: editData.meta_objetiva || "",
         meta_pratica: editData.meta_pratica || "",
-        meta_prazo: editData.meta_prazo || "",
+        meta_prazo: formatDateForInput(editData.meta_prazo),
         acao: editData.acao,
         tipo_acao: editData.tipo_acao,
         entregavel: editData.entregavel || "",
@@ -76,12 +81,12 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
         funcao_cargo: editData.funcao_cargo || "",
         co_responsaveis: editData.co_responsaveis || "",
         apoios_necessarios: editData.apoios_necessarios || [],
-        data_inicio: editData.data_inicio || "",
-        data_fim: editData.data_fim || "",
+        data_inicio: formatDateForInput(editData.data_inicio),
+        data_fim: formatDateForInput(editData.data_fim),
         status: editData.status,
         risco: editData.risco || "Baixo",
         plano_mitigacao: editData.plano_mitigacao || "",
-        custo_estimado: editData.custo_estimado?.toString() || "",
+        custo_estimado: editData.custo_estimado !== null && editData.custo_estimado !== undefined ? editData.custo_estimado.toString() : "",
         prioridade: editData.prioridade || "Média",
         impacto_saep: editData.impacto_saep || "Médio",
         observacoes: editData.observacoes || "",
