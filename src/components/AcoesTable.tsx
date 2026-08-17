@@ -106,7 +106,7 @@ export default function AcoesTable({ isAdmin = false }: AcoesTableProps) {
         </div>
         <div className="flex gap-2 shrink-0">
           <Button onClick={handleNew}>
-            <Plus className="h-4 w-4 mr-1" /> Nova Ação
+            <Plus className="h-4 w-4 mr-1" /> Cadastrar ação
           </Button>
         </div>
       </div>

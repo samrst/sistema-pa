@@ -181,7 +181,7 @@ export default function DashboardView() {
                         </TableCell>
                         <TableCell className="text-sm whitespace-nowrap">{acao.responsavel_principal}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={cn("text-xs", statusColor[a.status] || "")}>
+                          <Badge variant="outline" className={cn("text-xs", statusColor[acao.status] || "")}>
                             {acao.status}
                           </Badge>
                         </TableCell>

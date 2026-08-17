@@ -14,7 +14,6 @@ import "@/styles/header.css";
 import "@/styles/footer.css";
 import "@/styles/help-button.css";
 import { exportAcoesPdf } from "@/lib/exportPdf";
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></link>
 
 const ADMIN_SESSION_KEY = "saep_admin_session";
 
