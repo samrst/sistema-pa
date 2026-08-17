@@ -8,7 +8,8 @@
     "build": "tsc -p .",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
-    "prisma:validate": "prisma validate"
+    "prisma:validate": "prisma validate",
+    "prisma:db-setup": "bun scripts/db-setup.ts"
   },
   "dependencies": {
     "fastify": "^4.29.1",

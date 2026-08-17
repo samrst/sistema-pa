@@ -9,7 +9,8 @@ import AdminChatActions from "@/components/AdminChatActions";
 type Msg = { role: "user" | "assistant"; content: string };
 type AttachedFile = { name: string; content: string };
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-admin`;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const CHAT_URL = `${API_BASE_URL}/api/chat`;
 
 const SUGGESTIONS = [
   "Quais ações cadastradas ainda não foram iniciadas e quais cursos concentram a maior quantidade dessas ações?",
@@ -41,7 +42,6 @@ async function streamChat({
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
     },
     body: JSON.stringify({ messages }),
   });

@@ -16,11 +16,25 @@ import "@/styles/help-button.css";
 import { exportAcoesPdf } from "@/lib/exportPdf";
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></link>
 
+const ADMIN_SESSION_KEY = "saep_admin_session";
+
 const Index = () => {
   const [tab, setTab] = useState("acoes");
   const { data: acoes } = useAcoes();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  });
   const [loginOpen, setLoginOpen] = useState(false);
+
+  const handleLogout = () => {
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    setIsAdmin(false);
+  };
+
+  const handleLoginSuccess = () => {
+    sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+    setIsAdmin(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -55,7 +69,7 @@ const Index = () => {
           <li>
             {isAdmin ? (
               <Button
-                onClick={() => setIsAdmin(false)}
+                onClick={handleLogout}
                 className="bg-white/15 text-white border border-white/25 px-[18px] py-[10px] rounded-[8px] font-sans text-[14px] font-semibold transition-all duration-300 ease-in-out hover:bg-white/25 hover:-translate-y-[2px]"
               >
                 <LogOut className="mr-2 h-4 w-4" />
@@ -152,7 +166,7 @@ const Index = () => {
         <p>© 2026 SENAI — Uso interno restrito</p>
     </footer>
 
-      <AdminLogin open={loginOpen} onOpenChange={setLoginOpen} onSuccess={() => setIsAdmin(true)} />
+      <AdminLogin open={loginOpen} onOpenChange={setLoginOpen} onSuccess={handleLoginSuccess} />
     </div>
   );
 };
