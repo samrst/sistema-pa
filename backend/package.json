@@ -12,6 +12,7 @@
     "prisma:db-setup": "bun scripts/db-setup.ts"
   },
   "dependencies": {
+    "@fastify/jwt": "^8.0.1",
     "@google/generative-ai": "^0.21.0",
     "@prisma/client": "^5.12.0",
     "bcryptjs": "^3.0.3",

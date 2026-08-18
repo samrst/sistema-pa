@@ -1,8 +1,12 @@
 import Fastify from 'fastify';
 import registerPrisma from './plugins/prisma';
+import registerJwt from './plugins/jwt';
 import acoesRoutes from './routes/acoes';
 import iaRoutes from './routes/ia';
 import chatRoutes from './routes/chat';
+import authRoutes from './routes/auth';
+import usuariosRoutes from './routes/usuarios';
+import unidadesRoutes from './routes/unidades';
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 const ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
@@ -25,8 +29,9 @@ async function buildServer() {
     }
   });
 
-  // Register Prisma plugin
+  // Register plugins
   await registerPrisma(fastify);
+  await registerJwt(fastify);
 
   // Health endpoint
   fastify.get('/health', async (req, reply) => {
@@ -44,6 +49,9 @@ async function buildServer() {
   });
 
   // Register routes
+  await authRoutes(fastify);
+  await usuariosRoutes(fastify);
+  await unidadesRoutes(fastify);
   await acoesRoutes(fastify);
   await iaRoutes(fastify);
   await chatRoutes(fastify);
