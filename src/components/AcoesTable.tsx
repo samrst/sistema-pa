@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Search, FileDown } from "lucide-react";
+import { Pencil, Trash2, Plus, Search, FileDown, AlertTriangle, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,6 +25,76 @@ const prioridadeColor: Record<string, string> = {
   "Média": "bg-warning/15 text-warning border-warning/30",
   "Alta": "bg-destructive/15 text-destructive border-destructive/30",
 };
+
+export type PrazoStatus = "concluido" | "sem_prazo" | "vencida" | "vencendo" | "normal";
+
+export interface PrazoInfo {
+  status: PrazoStatus;
+  label: string;
+  formattedDate: string;
+  diasRestantes?: number;
+}
+
+export function getPrazoInfo(dataFimStr: string | null | undefined, acaoStatus: string): PrazoInfo {
+  if (!dataFimStr) {
+    return {
+      status: "sem_prazo",
+      label: "—",
+      formattedDate: "—",
+    };
+  }
+
+  const datePart = dataFimStr.includes("T") ? dataFimStr.split("T")[0] : dataFimStr;
+  const [yearStr, monthStr, dayStr] = datePart.split("-");
+  const dataFim = new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1, parseInt(dayStr, 10));
+  dataFim.setHours(0, 0, 0, 0);
+
+  const formattedDate = `${dayStr.padStart(2, "0")}/${monthStr.padStart(2, "0")}/${yearStr}`;
+
+  if (acaoStatus === "Concluído") {
+    return {
+      status: "concluido",
+      label: formattedDate,
+      formattedDate,
+    };
+  }
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const diffTime = dataFim.getTime() - hoje.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return {
+      status: "vencida",
+      label: "Vencida",
+      formattedDate,
+      diasRestantes: diffDays,
+    };
+  }
+
+  if (diffDays <= 7) {
+    const texto = diffDays === 0
+      ? "Vence hoje"
+      : diffDays === 1
+      ? "Vence em 1 dia"
+      : `Vence em ${diffDays} dias`;
+    return {
+      status: "vencendo",
+      label: texto,
+      formattedDate,
+      diasRestantes: diffDays,
+    };
+  }
+
+  return {
+    status: "normal",
+    label: formattedDate,
+    formattedDate,
+    diasRestantes: diffDays,
+  };
+}
 
 interface AcoesTableProps {
   isAdmin?: boolean;
@@ -169,7 +239,34 @@ export default function AcoesTable({ isAdmin: propIsAdmin }: AcoesTableProps) {
                   <TableCell className="text-sm">{a.responsavel_principal}</TableCell>
                   <TableCell><Badge variant="outline" className={statusColor[a.status] || ""}>{a.status}</Badge></TableCell>
                   <TableCell><Badge variant="outline" className={prioridadeColor[a.prioridade || ""] || ""}>{a.prioridade}</Badge></TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{a.data_fim ? new Date(a.data_fim).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                  <TableCell className="text-sm">
+                    {(() => {
+                      const prazoInfo = getPrazoInfo(a.data_fim, a.status);
+                      if (prazoInfo.status === "vencida") {
+                        return (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs text-muted-foreground">{prazoInfo.formattedDate}</span>
+                            <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[11px] w-fit flex items-center gap-1 font-medium py-0 px-1.5">
+                              <AlertTriangle className="h-3 w-3" />
+                              Vencida
+                            </Badge>
+                          </div>
+                        );
+                      }
+                      if (prazoInfo.status === "vencendo") {
+                        return (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs text-muted-foreground">{prazoInfo.formattedDate}</span>
+                            <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30 text-[11px] w-fit flex items-center gap-1 font-medium py-0 px-1.5">
+                              <Clock className="h-3 w-3" />
+                              {prazoInfo.label}
+                            </Badge>
+                          </div>
+                        );
+                      }
+                      return <span className="text-muted-foreground">{prazoInfo.formattedDate}</span>;
+                    })()}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       {canEditAcao(a) && (

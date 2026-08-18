@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAcoes } from "@/hooks/useAcoes";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -27,11 +28,25 @@ const statusColor: Record<string, string> = {
 type FilterType = "total" | "concluidas" | "emAndamento" | "atrasadas" | null;
 
 export default function DashboardView() {
+  const { user, isAdmin, isMacroprocesso, isUsuario } = useAuth();
   const { data: acoes } = useAcoes();
   const all = acoes || [];
   const [activeFilter, setActiveFilter] = useState<FilterType>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editData, setEditData] = useState<Acao | null>(null);
+
+  const canEditAcao = (a: Acao) => {
+    if (isAdmin) return true;
+    if (isMacroprocesso) {
+      return user?.unidades?.some(
+        (u) => u.nome.toLowerCase() === a.unidade.toLowerCase() || (a.unidade_id && u.id === a.unidade_id)
+      ) ?? false;
+    }
+    if (isUsuario) {
+      return Boolean(a.usuario_criador_id && user?.id && a.usuario_criador_id === user.id);
+    }
+    return false;
+  };
 
   const total = all.length;
   const concluidas = all.filter((a) => a.status === "Concluído").length;
@@ -191,16 +206,18 @@ export default function DashboardView() {
                             : "—"}
                         </TableCell>
                         <TableCell className="text-center">
-                          <button
-                            onClick={() => {
-                              setEditData(acao);
-                              setEditOpen(true);
-                            }}
-                            className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-[0.75rem] hover:bg-primary/10"
-                            title="Editar ação"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
+                          {canEditAcao(acao) && (
+                            <button
+                              onClick={() => {
+                                setEditData(acao);
+                                setEditOpen(true);
+                              }}
+                              className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-[0.75rem] hover:bg-primary/10"
+                              title="Editar ação"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

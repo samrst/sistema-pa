@@ -168,6 +168,10 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
     <h3 className="text-sm font-heading font-bold text-primary tracking-widest uppercase mt-6 mb-3 pb-2 border-b-2 border-primary-light">{children}</h3>
   );
 
+  const isUnidadeDisabled = Boolean(
+    isUsuario || (isMacroprocesso && user?.unidades?.length === 1)
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0">
@@ -183,9 +187,9 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
                 <Select
                   value={form.unidade}
                   onValueChange={(v) => set("unidade", v)}
-                  disabled={isUsuario || (isMacroprocesso && user?.unidades?.length === 1)}
+                  disabled={isUnidadeDisabled}
                 >
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger disabled={isUnidadeDisabled}><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>{availableUnidades.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
