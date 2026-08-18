@@ -5,11 +5,11 @@ import { Textarea } from "@/components/ui/textarea";
 import DOMPurify from "dompurify";
 import { useAcoes } from "@/hooks/useAcoes";
 import AdminChatActions from "@/components/AdminChatActions";
+import { API_BASE_URL, getAuthHeaders } from "@/services/api";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type AttachedFile = { name: string; content: string };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const CHAT_URL = `${API_BASE_URL}/api/chat`;
 
 const SUGGESTIONS = [
@@ -40,9 +40,7 @@ async function streamChat({
 }) {
   const resp = await fetch(CHAT_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ messages }),
   });
 

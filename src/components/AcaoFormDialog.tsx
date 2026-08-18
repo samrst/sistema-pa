@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useCreateAcao, useUpdateAcao, type Acao } from "@/hooks/useAcoes";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
   UNIDADES, CURSOS, MODALIDADE, CAPACIDADES, TIPOS_ACAO, STATUS_OPTIONS,
@@ -52,9 +53,20 @@ const defaultForm = {
 };
 
 export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) {
+  const { user, isMacroprocesso, isUsuario } = useAuth();
   const [form, setForm] = useState(defaultForm);
   const createMutation = useCreateAcao();
   const updateMutation = useUpdateAcao();
+
+  const availableUnidades = useMemo(() => {
+    if (isUsuario && user?.unidades?.length) {
+      return user.unidades.map((u) => u.nome);
+    }
+    if (isMacroprocesso && user?.unidades?.length) {
+      return user.unidades.map((u) => u.nome);
+    }
+    return UNIDADES;
+  }, [user, isUsuario, isMacroprocesso]);
 
   const formatDateForInput = (dateVal?: string | null) => {
     if (!dateVal) return "";
@@ -92,9 +104,17 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
         observacoes: editData.observacoes || "",
       });
     } else {
-      setForm(defaultForm);
+      const initialUnit = isUsuario && user?.unidades?.[0]?.nome
+        ? user.unidades[0].nome
+        : isMacroprocesso && user?.unidades?.length === 1
+        ? user.unidades[0].nome
+        : "";
+      setForm({
+        ...defaultForm,
+        unidade: initialUnit,
+      });
     }
-  }, [editData, open]);
+  }, [editData, open, user, isUsuario, isMacroprocesso]);
 
   const set = (key: string, value: string | string[]) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -108,7 +128,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
   };
 
   const handleSubmit = async () => {
-    if (!form.unidade ||!form.modalidade ||!form.curso || !form.capacidade_saep || !form.problema_identificado || !form.acao || !form.tipo_acao || !form.responsavel_principal) {
+    if (!form.unidade || !form.modalidade || !form.curso || !form.capacidade_saep || !form.problema_identificado || !form.acao || !form.tipo_acao || !form.responsavel_principal) {
       toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
@@ -160,9 +180,13 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-primary font-semibold">Unidade *</Label>
-                <Select value={form.unidade} onValueChange={(v) => set("unidade", v)}>
+                <Select
+                  value={form.unidade}
+                  onValueChange={(v) => set("unidade", v)}
+                  disabled={isUsuario || (isMacroprocesso && user?.unidades?.length === 1)}
+                >
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{UNIDADES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                  <SelectContent>{availableUnidades.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>

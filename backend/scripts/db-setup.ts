@@ -184,6 +184,15 @@ async function main() {
       console.log('   -> Usuário ADMIN inicial cadastrado com sucesso.');
     } else {
       console.log(`   -> Usuário ADMIN inicial já existe (${existingAdmin.email}).`);
+      if (process.env.ADMIN_PASSWORD) {
+        const saltRounds = 10;
+        const senhaHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, saltRounds);
+        await prisma.usuario.update({
+          where: { id: existingAdmin.id },
+          data: { senha_hash: senhaHash },
+        });
+        console.log('   -> Senha do ADMIN sincronizada com ADMIN_PASSWORD.');
+      }
     }
 
     // 5. Verificações Finais

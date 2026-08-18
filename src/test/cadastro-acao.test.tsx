@@ -1,8 +1,9 @@
 import "./setup";
 import React from "react";
-import { describe, it, expect } from "bun:test";
-import { render, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, afterEach } from "bun:test";
+import { render, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "../contexts/AuthContext";
 import AcoesTable from "../components/AcoesTable";
 import AcaoFormDialog from "../components/AcaoFormDialog";
 
@@ -49,26 +50,29 @@ function createTestQueryClient() {
   });
 }
 
+function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>{ui}</AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
 describe("Fluxo de Cadastro e Interface de Ações (AcoesTable + AcaoFormDialog)", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it("deve renderizar o botão 'Cadastrar ação' corretamente", () => {
-    const queryClient = createTestQueryClient();
-    const { getByRole } = render(
-      <QueryClientProvider client={queryClient}>
-        <AcoesTable isAdmin={true} />
-      </QueryClientProvider>
-    );
+    const { getByRole } = renderWithProviders(<AcoesTable isAdmin={true} />);
 
     const cadastrarBtn = getByRole("button", { name: /Cadastrar ação/i });
     expect(cadastrarBtn).toBeTruthy();
   });
 
   it("deve abrir o modal AcaoFormDialog ao clicar no botão 'Cadastrar ação'", async () => {
-    const queryClient = createTestQueryClient();
-    const { getByRole, getByText } = render(
-      <QueryClientProvider client={queryClient}>
-        <AcoesTable isAdmin={true} />
-      </QueryClientProvider>
-    );
+    const { getByRole, getByText } = renderWithProviders(<AcoesTable isAdmin={true} />);
 
     const cadastrarBtn = getByRole("button", { name: /Cadastrar ação/i });
     fireEvent.click(cadastrarBtn);
@@ -99,11 +103,8 @@ describe("Fluxo de Cadastro e Interface de Ações (AcoesTable + AcaoFormDialog)
       open = v;
     };
 
-    const queryClient = createTestQueryClient();
-    const { getByRole } = render(
-      <QueryClientProvider client={queryClient}>
-        <AcaoFormDialog open={open} onOpenChange={handleOpenChange} />
-      </QueryClientProvider>
+    const { getByRole } = renderWithProviders(
+      <AcaoFormDialog open={open} onOpenChange={handleOpenChange} />
     );
 
     const cancelButton = getByRole("button", { name: /Cancelar/i });
@@ -113,11 +114,8 @@ describe("Fluxo de Cadastro e Interface de Ações (AcoesTable + AcaoFormDialog)
   });
 
   it("deve abrir em modo de edição quando editData é fornecido", () => {
-    const queryClient = createTestQueryClient();
-    const { getByText, getByRole } = render(
-      <QueryClientProvider client={queryClient}>
-        <AcaoFormDialog open={true} onOpenChange={() => {}} editData={mockAcoes[0]} />
-      </QueryClientProvider>
+    const { getByText, getByRole } = renderWithProviders(
+      <AcaoFormDialog open={true} onOpenChange={() => {}} editData={mockAcoes[0]} />
     );
 
     expect(getByText("Editar Ação")).toBeTruthy();

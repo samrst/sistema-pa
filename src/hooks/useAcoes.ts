@@ -1,33 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers || {}),
-    },
-  });
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => ({}));
-    const message = payload?.error || payload?.message || `Erro na requisição: ${response.status}`;
-    throw new Error(message);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
+import { apiFetch } from "@/services/api";
 
 export type Acao = {
   id: string;
   created_at: string;
   updated_at: string;
+  unidade_id?: string | null;
+  usuario_criador_id?: string | null;
   unidade: string;
   curso: string;
   modalidade: string;

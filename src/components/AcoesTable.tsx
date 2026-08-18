@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAcoes, useDeleteAcao, type Acao } from "@/hooks/useAcoes";
+import { useAuth } from "@/hooks/useAuth";
 import AcaoFormDialog from "./AcaoFormDialog";
 import { toast } from "sonner";
 import { CURSOS, STATUS_OPTIONS, UNIDADES } from "@/lib/constants";
@@ -29,7 +30,10 @@ interface AcoesTableProps {
   isAdmin?: boolean;
 }
 
-export default function AcoesTable({ isAdmin = false }: AcoesTableProps) {
+export default function AcoesTable({ isAdmin: propIsAdmin }: AcoesTableProps) {
+  const { user, isAdmin: authIsAdmin, isMacroprocesso, isUsuario } = useAuth();
+  const isAdmin = propIsAdmin !== undefined ? propIsAdmin : authIsAdmin;
+
   const { data: acoes, isLoading } = useAcoes();
   const deleteMutation = useDeleteAcao();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -38,6 +42,29 @@ export default function AcoesTable({ isAdmin = false }: AcoesTableProps) {
   const [filterUnidade, setFilterUnidade] = useState("all");
   const [filterCurso, setFilterCurso] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+
+  const availableFilterUnidades = useMemo(() => {
+    if (isUsuario && user?.unidades?.length) {
+      return user.unidades.map((u) => u.nome);
+    }
+    if (isMacroprocesso && user?.unidades?.length) {
+      return user.unidades.map((u) => u.nome);
+    }
+    return UNIDADES;
+  }, [user, isUsuario, isMacroprocesso]);
+
+  const canEditAcao = (a: Acao) => {
+    if (isAdmin) return true;
+    if (isMacroprocesso) {
+      return user?.unidades?.some(
+        (u) => u.nome.toLowerCase() === a.unidade.toLowerCase() || (a.unidade_id && u.id === a.unidade_id)
+      ) ?? false;
+    }
+    if (isUsuario) {
+      return Boolean(a.usuario_criador_id && user?.id && a.usuario_criador_id === user.id);
+    }
+    return false;
+  };
 
   const filtered = (acoes || []).filter((a) => {
     const matchSearch = !search || 
@@ -86,7 +113,7 @@ export default function AcoesTable({ isAdmin = false }: AcoesTableProps) {
             <SelectTrigger className="w-[220px]"><SelectValue placeholder="Todas as unidades" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as unidades</SelectItem>
-              {UNIDADES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+              {availableFilterUnidades.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterCurso} onValueChange={setFilterCurso}>
@@ -145,13 +172,26 @@ export default function AcoesTable({ isAdmin = false }: AcoesTableProps) {
                   <TableCell className="text-sm text-muted-foreground">{a.data_fim ? new Date(a.data_fim).toLocaleDateString("pt-BR") : "—"}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={() => handleEdit(a)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
+                      {canEditAcao(a) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
+                          onClick={() => handleEdit(a)}
+                          title="Editar ação"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       {isAdmin && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                              title="Excluir ação"
+                            >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </AlertDialogTrigger>

@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { BrainCircuit, Sparkles, Loader2, ClipboardList, FileText, RotateCcw, Download } from "lucide-react";
 import DOMPurify from "dompurify";
 import { exportRelatorioPdf } from "@/lib/exportRelatorioPdf";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+import { API_BASE_URL, getAuthHeaders } from "@/services/api";
 
 const SANITIZE_CONFIG = {
   ALLOWED_TAGS: [
@@ -33,9 +32,7 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/ia/analyze`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ acoes: dadosAcoes }),
       });
 
