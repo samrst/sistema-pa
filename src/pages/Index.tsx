@@ -10,6 +10,7 @@ import {
   FileDown,
   Loader2,
   CircleHelp,
+  Users,
 } from "lucide-react";
 import AcoesTable from "@/components/AcoesTable";
 import DashboardView from "@/components/DashboardView";
@@ -17,6 +18,7 @@ import ChecklistView from "@/components/ChecklistView";
 import AnalistaGemini from "@/components/AnalistaGemini";
 import AdminChat from "@/components/AdminChat";
 import LoginView from "@/components/LoginView";
+import UsuariosView from "@/components/UsuariosView";
 import { useAcoes } from "@/hooks/useAcoes";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -36,7 +38,10 @@ const Index = () => {
     if (!canAccessIA && (tab === "analise" || tab === "agente-admin")) {
       setTab("acoes");
     }
-  }, [canAccessIA, tab]);
+    if (!isAdmin && tab === "usuarios") {
+      setTab("acoes");
+    }
+  }, [canAccessIA, isAdmin, tab]);
 
   const getPerfilLabel = () => {
     if (isAdmin) return "Admin";
@@ -134,7 +139,7 @@ const Index = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="mb-8">
+          <TabsList className="mb-8 flex-wrap">
             <TabsTrigger value="acoes" className="gap-1.5">
               <TableProperties className="h-4 w-4" /> Ações
             </TabsTrigger>
@@ -152,6 +157,11 @@ const Index = () => {
             {canAccessIA && (
               <TabsTrigger value="agente-admin" className="gap-1.5">
                 <MessageSquare className="h-4 w-4" /> Agente Admin
+              </TabsTrigger>
+            )}
+            {isAdmin && (
+              <TabsTrigger value="usuarios" className="gap-1.5">
+                <Users className="h-4 w-4" /> Gestão de Acessos
               </TabsTrigger>
             )}
           </TabsList>
@@ -173,6 +183,11 @@ const Index = () => {
           {canAccessIA && (
             <TabsContent value="agente-admin">
               <AdminChat />
+            </TabsContent>
+          )}
+          {isAdmin && (
+            <TabsContent value="usuarios">
+              <UsuariosView />
             </TabsContent>
           )}
         </Tabs>
