@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { render, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "../contexts/AuthContext";
+import { FilterProvider } from "../contexts/FilterContext";
 import AcoesTable, { getPrazoInfo } from "../components/AcoesTable";
 import AcaoFormDialog from "../components/AcaoFormDialog";
 import DashboardView from "../components/DashboardView";
@@ -174,7 +175,9 @@ function renderWithProviders(ui: React.ReactElement, initialUser: any = mockAdmi
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{ui}</AuthProvider>
+      <AuthProvider>
+        <FilterProvider>{ui}</FilterProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

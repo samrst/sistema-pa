@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import DOMPurify from "dompurify";
 import { useAcoes } from "@/hooks/useAcoes";
-import AdminChatActions from "@/components/AdminChatActions";
+import { toast } from "sonner";
 import { API_BASE_URL, getAuthHeaders } from "@/services/api";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -96,7 +96,7 @@ function useSpeechRecognition(onResult: (text: string) => void) {
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge.");
+      toast.error("Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge.");
       return;
     }
 

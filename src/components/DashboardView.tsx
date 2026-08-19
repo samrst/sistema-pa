@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useAcoes } from "@/hooks/useAcoes";
+import React, { useState, useMemo } from "react";
+import { useAcoesFilter } from "@/hooks/useAcoesFilter";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,13 +25,13 @@ const statusColor: Record<string, string> = {
   "Impeditivo": "bg-destructive/15 text-destructive border-destructive/30",
 };
 
-type FilterType = "total" | "concluidas" | "emAndamento" | "atrasadas" | null;
+type DrilldownType = "total" | "concluidas" | "emAndamento" | "atrasadas" | null;
 
 export default function DashboardView() {
   const { user, isAdmin, isMacroprocesso, isUsuario } = useAuth();
-  const { data: acoes } = useAcoes();
-  const all = acoes || [];
-  const [activeFilter, setActiveFilter] = useState<FilterType>(null);
+  const { filteredAcoes, totalAcoes, hasActiveFilters } = useAcoesFilter();
+
+  const [activeDrilldown, setActiveDrilldown] = useState<DrilldownType>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editData, setEditData] = useState<Acao | null>(null);
 
@@ -48,71 +48,111 @@ export default function DashboardView() {
     return false;
   };
 
-  const total = all.length;
-  const concluidas = all.filter((a) => a.status === "Concluído").length;
-  const atrasadas = all.filter((a) => a.data_fim && new Date(a.data_fim) < new Date() && a.status !== "Concluído").length;
-  const emAndamento = all.filter((a) => a.status === "Em andamento").length;
+  // KPIs derived strictly from filteredAcoes
+  const total = filteredAcoes.length;
+  const concluidas = useMemo(() => filteredAcoes.filter((a) => a.status === "Concluído").length, [filteredAcoes]);
+  const emAndamento = useMemo(() => filteredAcoes.filter((a) => a.status === "Em andamento").length, [filteredAcoes]);
+  const atrasadas = useMemo(() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    return filteredAcoes.filter((a) => {
+      if (!a.data_fim || a.status === "Concluído") return false;
+      const datePart = a.data_fim.includes("T") ? a.data_fim.split("T")[0] : a.data_fim;
+      const [y, m, d] = datePart.split("-");
+      const dataFim = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+      dataFim.setHours(0, 0, 0, 0);
+      return dataFim < hoje;
+    }).length;
+  }, [filteredAcoes]);
+
   const pctConcluidas = total ? Math.round((concluidas / total) * 100) : 0;
 
   const stats = [
-    { key: "total" as FilterType, label: "Total de Ações", value: total, icon: ClipboardList, color: "text-primary", activeBg: "ring-2 ring-primary bg-primary/5" },
-    { key: "concluidas" as FilterType, label: "Concluídas", value: `${pctConcluidas}%`, rawValue: concluidas, icon: CheckCircle2, color: "text-success", activeBg: "ring-2 ring-success bg-success/5" },
-    { key: "emAndamento" as FilterType, label: "Em Andamento", value: emAndamento, icon: Clock, color: "text-info", activeBg: "ring-2 ring-info bg-info/5" },
-    { key: "atrasadas" as FilterType, label: "Atrasadas", value: atrasadas, icon: AlertTriangle, color: "text-destructive", activeBg: "ring-2 ring-destructive bg-destructive/5" },
+    { key: "total" as DrilldownType, label: "Total de Ações", value: total, icon: ClipboardList, color: "text-primary", activeBg: "ring-2 ring-primary bg-primary/5" },
+    { key: "concluidas" as DrilldownType, label: "Concluídas", value: `${pctConcluidas}%`, rawValue: concluidas, icon: CheckCircle2, color: "text-success", activeBg: "ring-2 ring-success bg-success/5" },
+    { key: "emAndamento" as DrilldownType, label: "Em Andamento", value: emAndamento, icon: Clock, color: "text-info", activeBg: "ring-2 ring-info bg-info/5" },
+    { key: "atrasadas" as DrilldownType, label: "Atrasadas", value: atrasadas, icon: AlertTriangle, color: "text-destructive", activeBg: "ring-2 ring-destructive bg-destructive/5" },
   ];
 
-  const filteredAcoes = activeFilter
-    ? all.filter((a) => {
-        if (activeFilter === "total") return true;
-        if (activeFilter === "concluidas") return a.status === "Concluído";
-        if (activeFilter === "emAndamento") return a.status === "Em andamento";
-        if (activeFilter === "atrasadas") return a.data_fim && new Date(a.data_fim) < new Date() && a.status !== "Concluído";
-        return false;
-      })
-    : [];
+  // Drilldown list derived from filteredAcoes
+  const drilldownAcoes = useMemo(() => {
+    if (!activeDrilldown) return [];
+    if (activeDrilldown === "total") return filteredAcoes;
+    if (activeDrilldown === "concluidas") return filteredAcoes.filter((a) => a.status === "Concluído");
+    if (activeDrilldown === "emAndamento") return filteredAcoes.filter((a) => a.status === "Em andamento");
+    if (activeDrilldown === "atrasadas") {
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      return filteredAcoes.filter((a) => {
+        if (!a.data_fim || a.status === "Concluído") return false;
+        const datePart = a.data_fim.includes("T") ? a.data_fim.split("T")[0] : a.data_fim;
+        const [y, m, d] = datePart.split("-");
+        const dataFim = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+        dataFim.setHours(0, 0, 0, 0);
+        return dataFim < hoje;
+      });
+    }
+    return [];
+  }, [activeDrilldown, filteredAcoes]);
 
-  // By curso
-  const byCurso: Record<string, number> = {};
-  all.forEach((a) => {
-    const cursoName = (a.curso || "Não informado").replace("Técnico em ", "");
-    byCurso[cursoName] = (byCurso[cursoName] || 0) + 1;
-  });
-  const cursoData = Object.entries(byCurso).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  // Chart 1: By Unidade
+  const unidadeData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredAcoes.forEach((a) => {
+      const name = a.unidade || "Não informada";
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredAcoes]);
 
-  // By status
-  const byStatus: Record<string, number> = {};
-  all.forEach((a) => {
-    const statusName = a.status || "Indefinido";
-    byStatus[statusName] = (byStatus[statusName] || 0) + 1;
-  });
-  const statusData = Object.entries(byStatus).map(([name, value]) => ({ name, value }));
+  // Chart 2: By Modalidade
+  const modalidadeData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredAcoes.forEach((a) => {
+      const name = a.modalidade || "Presencial";
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [filteredAcoes]);
 
-  // By tipo
-  const byTipo: Record<string, number> = {};
-  all.forEach((a) => {
-    const tipoName = a.tipo_acao || "Outros";
-    byTipo[tipoName] = (byTipo[tipoName] || 0) + 1;
-  });
-  const tipoData = Object.entries(byTipo).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  // Chart 3: By Curso
+  const cursoData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredAcoes.forEach((a) => {
+      const name = (a.curso || "Não informado").replace("Técnico em ", "");
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredAcoes]);
 
-  // By unidade (NOVO)
-  const byUnidade: Record<string, number> = {};
-  all.forEach((a) => {
-    const unidadeName = a.unidade || "Não informada";
-    byUnidade[unidadeName] = (byUnidade[unidadeName] || 0) + 1;
-  });
-  const unidadeData = Object.entries(byUnidade).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  // Chart 4: By Status
+  const statusData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredAcoes.forEach((a) => {
+      const name = a.status || "Indefinido";
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [filteredAcoes]);
 
-  // By modalidade (NOVO)
-  const byModalidade: Record<string, number> = {};
-  all.forEach((a) => {
-    const modalidadeName = (a as any).modalidade || "Presencial";
-    byModalidade[modalidadeName] = (byModalidade[modalidadeName] || 0) + 1;
-  });
-  const modalidadeData = Object.entries(byModalidade).map(([name, value]) => ({ name, value }));
+  // Chart 5: By Tipo de Ação
+  const tipoData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredAcoes.forEach((a) => {
+      const name = a.tipo_acao || "Outros";
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredAcoes]);
 
-  const filterTitle: Record<NonNullable<FilterType>, string> = {
-    total: "Todas as Ações",
+  const drilldownTitle: Record<NonNullable<DrilldownType>, string> = {
+    total: "Todas as Ações Filtradas",
     concluidas: "Ações Concluídas",
     emAndamento: "Ações em Andamento",
     atrasadas: "Ações Atrasadas",
@@ -120,16 +160,16 @@ export default function DashboardView() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Cards Superiores */}
+      {/* Cards Superiores (KPIs) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <Card
             key={s.key}
             className={cn(
               "cursor-pointer transition-all hover:shadow-lg border border-border",
-              activeFilter === s.key ? s.activeBg : ""
+              activeDrilldown === s.key ? s.activeBg : ""
             )}
-            onClick={() => setActiveFilter(activeFilter === s.key ? null : s.key)}
+            onClick={() => setActiveDrilldown(activeDrilldown === s.key ? null : s.key)}
           >
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -144,40 +184,34 @@ export default function DashboardView() {
         ))}
       </div>
 
-      {/* Tabela de Filtro Ativo */}
-      {activeFilter && (
+      {/* Tabela de Detalhamento / Drilldown do KPI Ativo */}
+      {activeDrilldown && (
         <Card className="border border-border animate-fade-in shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-border">
             <CardTitle className="text-base font-heading text-primary">
-              {filterTitle[activeFilter]} <span className="text-muted-foreground font-normal">({filteredAcoes.length})</span>
+              {drilldownTitle[activeDrilldown]} <span className="text-muted-foreground font-normal">({drilldownAcoes.length})</span>
             </CardTitle>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setActiveFilter(null)}
+                onClick={() => setActiveDrilldown(null)}
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-[0.75rem] hover:bg-primary/10"
-                title="Limpar filtro"
+                title="Fechar detalhamento"
               >
                 <FilterX className="h-3.5 w-3.5" />
-                Limpar filtro
-              </button>
-              <button
-                onClick={() => setActiveFilter(null)}
-                className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-[0.75rem] hover:bg-primary/10"
-                title="Fechar"
-              >
-                <X className="h-4 w-4" />
+                Fechar
               </button>
             </div>
           </CardHeader>
-          <CardContent>
-            {filteredAcoes.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma ação encontrada para este filtro.</p>
+          <CardContent className="pt-4">
+            {drilldownAcoes.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma ação encontrada para esta seleção.</p>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="min-w-[200px]">Ação</TableHead>
+                      <TableHead>Unidade</TableHead>
                       <TableHead>Curso</TableHead>
                       <TableHead>Responsável</TableHead>
                       <TableHead>Status</TableHead>
@@ -186,11 +220,12 @@ export default function DashboardView() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAcoes.map((acao) => (
+                    {drilldownAcoes.map((acao) => (
                       <TableRow key={acao.id}>
                         <TableCell className="font-semibold text-sm text-primary max-w-[300px] truncate" title={acao.acao}>
                           {acao.acao}
                         </TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{acao.unidade}</TableCell>
                         <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                           {(acao.curso || "").replace("Técnico em ", "")}
                         </TableCell>
@@ -229,16 +264,16 @@ export default function DashboardView() {
         </Card>
       )}
 
-      {/* Grid de Gráficos */}
+      {/* Grid de Gráficos Reativos */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Gráfico 1: Ações por Unidade (NOVO - Barras Horizontais) */}
+        {/* Gráfico 1: Ações por Unidade (Barras Horizontais) */}
         <Card className="border border-border shadow-md">
           <CardHeader className="border-b border-border">
             <CardTitle className="text-base font-heading text-primary">Ações por Unidade</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {unidadeData.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível para os filtros ativos</p>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={unidadeData} layout="vertical" margin={{ left: 10, right: 20 }}>
@@ -252,14 +287,14 @@ export default function DashboardView() {
           </CardContent>
         </Card>
 
-        {/* Gráfico 2: Ações por Modalidade (NOVO - Pizza/Donut) */}
+        {/* Gráfico 2: Ações por Modalidade (Pizza/Donut) */}
         <Card className="border border-border shadow-md">
           <CardHeader className="border-b border-border">
             <CardTitle className="text-base font-heading text-primary">Ações por Modalidade</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {modalidadeData.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível para os filtros ativos</p>
             ) : (
               <div className="flex items-center gap-6">
                 <ResponsiveContainer width="50%" height={220}>
@@ -292,9 +327,9 @@ export default function DashboardView() {
           <CardHeader className="border-b border-border">
             <CardTitle className="text-base font-heading text-primary">Ações por Curso</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {cursoData.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível para os filtros ativos</p>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={cursoData} layout="vertical" margin={{ left: 10, right: 20 }}>
@@ -313,9 +348,9 @@ export default function DashboardView() {
           <CardHeader className="border-b border-border">
             <CardTitle className="text-base font-heading text-primary">Ações por Status</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {statusData.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível para os filtros ativos</p>
             ) : (
               <div className="flex items-center gap-6">
                 <ResponsiveContainer width="50%" height={220}>
@@ -346,11 +381,11 @@ export default function DashboardView() {
         {/* Gráfico 5: Ações por Tipo (Ocupa 2 colunas) */}
         <Card className="border border-border shadow-md lg:col-span-2">
           <CardHeader className="border-b border-border">
-            <CardTitle className="text-base font-heading text-primary">Ações por Tipo</CardTitle>
+            <CardTitle className="text-base font-heading text-primary">Ações por Tipo de Ação</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {tipoData.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível para os filtros ativos</p>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={tipoData} margin={{ bottom: 60 }}>

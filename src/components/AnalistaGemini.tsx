@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { BrainCircuit, Sparkles, Loader2, ClipboardList, FileText, RotateCcw, Download } from "lucide-react";
+import { BrainCircuit, Sparkles, Loader2, ClipboardList, FileText, RotateCcw, Download, Filter } from "lucide-react";
 import DOMPurify from "dompurify";
 import { exportRelatorioPdf } from "@/lib/exportRelatorioPdf";
 import { API_BASE_URL, getAuthHeaders } from "@/services/api";
+import { useAcoesFilter } from "@/hooks/useAcoesFilter";
+import { getFiltersSummary } from "@/contexts/FilterContext";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 const SANITIZE_CONFIG = {
   ALLOWED_TAGS: [
-    "h2", "h3", "h4", "p", "br", "hr", "div", "section", "span",
+    "h1", "h2", "h3", "h4", "p", "br", "hr", "div", "section", "span",
     "table", "thead", "tbody", "tfoot", "tr", "th", "td",
     "ul", "ol", "li", "strong", "em", "b", "i",
   ],
@@ -18,13 +22,20 @@ function sanitizeHtml(raw: string): string {
   return DOMPurify.sanitize(html, SANITIZE_CONFIG);
 }
 
-const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
+interface AnalistaGeminiProps {
+  dadosAcoes?: any[];
+}
+
+const AnalistaGemini = ({ dadosAcoes }: AnalistaGeminiProps) => {
+  const { filteredAcoes, filters, hasActiveFilters, activeFilterCount } = useAcoesFilter();
   const [analise, setAnalise] = useState<string>("");
   const [carregando, setCarregando] = useState(false);
 
+  const acoesParaAnalisar = dadosAcoes !== undefined ? dadosAcoes : filteredAcoes;
+
   const analisarComIA = async () => {
-    if (!dadosAcoes || dadosAcoes.length === 0) {
-      alert("Não há ações para analisar!");
+    if (!acoesParaAnalisar || acoesParaAnalisar.length === 0) {
+      toast.error("Não há ações no conjunto filtrado para analisar.");
       return;
     }
 
@@ -33,7 +44,7 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
       const response = await fetch(`${API_BASE_URL}/api/ia/analyze`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ acoes: dadosAcoes }),
+        body: JSON.stringify({ acoes: acoesParaAnalisar }),
       });
 
       if (!response.ok) {
@@ -45,9 +56,11 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
       if (data?.error) throw new Error(data.error);
 
       setAnalise(data.analise);
+      toast.success("Relatório executivo gerado com sucesso!");
     } catch (error: any) {
       console.error("Erro na análise:", error);
       setAnalise(`❌ Erro ao realizar análise: ${error.message || "Tente novamente."}`);
+      toast.error("Erro ao gerar análise com IA.");
     } finally {
       setCarregando(false);
     }
@@ -67,21 +80,51 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
             </div>
           </div>
 
-          <div className="bg-primary-soft border border-dashed border-primary-light rounded-[0.875rem] p-6 mb-6 text-center">
-            <ClipboardList className="mx-auto text-primary/30 mb-3" size={36} />
+          <div className="bg-primary-soft border border-dashed border-primary-light rounded-[0.875rem] p-6 mb-6 text-center space-y-3">
+            <ClipboardList className="mx-auto text-primary/30 mb-1" size={36} />
             <p className="text-foreground font-semibold text-base">
-              {dadosAcoes?.length || 0} ações prontas para análise
+              {acoesParaAnalisar?.length || 0} {acoesParaAnalisar?.length === 1 ? "ação pronta" : "ações prontas"} para análise
             </p>
-            <p className="text-muted-foreground text-xs mt-1 max-w-md mx-auto">
-              A IA vai cruzar dados entre cursos, identificar padrões em comum, ações críticas, focos estratégicos e gerar recomendações para a gestão.
+            <p className="text-muted-foreground text-xs max-w-md mx-auto">
+              A IA cruzará dados entre cursos e unidades, identificará padrões em comum, ações críticas, focos estratégicos e gerará recomendações para a gestão.
             </p>
+
+            {/* Resumo do Escopo dos Filtros Ativos */}
+            {hasActiveFilters && (
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-1.5 border-t border-primary-light/40">
+                <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                  <Filter className="h-3 w-3 text-primary" />
+                  Escopo filtrado:
+                </span>
+                {filters.unidade !== "all" && (
+                  <Badge variant="outline" className="text-[11px] bg-primary/10 text-primary border-primary/20">
+                    Unidade: {filters.unidade}
+                  </Badge>
+                )}
+                {filters.curso !== "all" && (
+                  <Badge variant="outline" className="text-[11px] bg-primary/10 text-primary border-primary/20">
+                    Curso: {filters.curso.replace("Técnico em ", "")}
+                  </Badge>
+                )}
+                {filters.status !== "all" && (
+                  <Badge variant="outline" className="text-[11px] bg-primary/10 text-primary border-primary/20">
+                    Status: {filters.status}
+                  </Badge>
+                )}
+                {filters.criticidade !== "all" && (
+                  <Badge variant="outline" className="text-[11px] bg-destructive/10 text-destructive border-destructive/20">
+                    Criticidade: {filters.criticidade}
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="text-center">
             <button
               onClick={analisarComIA}
-              disabled={carregando}
-              className="inline-flex items-center justify-center px-8 py-3 font-semibold text-sm text-primary-foreground bg-primary rounded-[0.875rem] hover:bg-primary-dark transition-all disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.97]"
+              disabled={carregando || acoesParaAnalisar.length === 0}
+              className="inline-flex items-center justify-center px-8 py-3 font-semibold text-sm text-primary-foreground bg-primary rounded-[0.875rem] hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
             >
               {carregando ? (
                 <>
@@ -109,12 +152,12 @@ const AnalistaGemini = ({ dadosAcoes }: { dadosAcoes: any[] }) => {
                 <div>
                   <h3 className="font-heading font-bold text-primary-foreground text-sm sm:text-base">Relatório Executivo — Plano de Ações SAEP</h3>
                   <p className="text-[11px] text-primary-foreground/70">
-                    SENAI Bahia · Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {dadosAcoes.length} ações
+                    SENAI Bahia · Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {acoesParaAnalisar.length} {acoesParaAnalisar.length === 1 ? "ação analisada" : "ações analisadas"}
                   </p>
                 </div>
               </div>
               <button
-                onClick={() => exportRelatorioPdf(analise, dadosAcoes.length)}
+                onClick={() => exportRelatorioPdf(analise, acoesParaAnalisar.length, getFiltersSummary(filters))}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground rounded-[0.5rem] transition-colors"
                 title="Baixar relatório em PDF"
               >

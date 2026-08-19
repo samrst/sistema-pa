@@ -2,7 +2,32 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { buildColumnStyles, getPreferredPdfOrientation, parseReportHtml, stripPdfEmojis } from "@/lib/reportPdfHtml";
 
-export function exportRelatorioPdf(markdownContent: string, totalAcoes: number) {
+function wrapTextSafe(doc: jsPDF, text: string, maxWidth: number): string[] {
+  if (!text) return [];
+  const words = text.split(/\s+/);
+  const safeWords: string[] = [];
+
+  for (const word of words) {
+    if (doc.getTextWidth(word) > maxWidth) {
+      let chunk = "";
+      for (const char of word) {
+        if (doc.getTextWidth(chunk + char) > maxWidth) {
+          if (chunk) safeWords.push(chunk);
+          chunk = char;
+        } else {
+          chunk += char;
+        }
+      }
+      if (chunk) safeWords.push(chunk);
+    } else {
+      safeWords.push(word);
+    }
+  }
+
+  return doc.splitTextToSize(safeWords.join(" "), maxWidth);
+}
+
+export function exportRelatorioPdf(markdownContent: string, totalAcoes: number, filtersSummary?: string) {
   const cleaned = stripPdfEmojis(markdownContent);
   const { blocks, tables } = parseReportHtml(cleaned);
   const orientation = getPreferredPdfOrientation(tables);
@@ -11,168 +36,231 @@ export function exportRelatorioPdf(markdownContent: string, totalAcoes: number) 
   const pageHeight = doc.internal.pageSize.getHeight();
   const marginLeft = 14;
   const marginRight = 14;
+  const marginTop = 16;
+  const marginBottom = 16;
   const contentWidth = pageWidth - marginLeft - marginRight;
 
-  // ── COVER / HEADER ──
-  doc.setFillColor(37, 99, 235);
-  doc.rect(0, 0, pageWidth, 45, "F");
+  // ── HEADER BANNER ──
+  const headerHeight = 44;
+  doc.setFillColor(22, 65, 148); // SENAI Navy Blue (#164194)
+  doc.rect(0, 0, pageWidth, headerHeight, "F");
 
-  doc.setFontSize(20);
+  doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("SENAI Bahia", marginLeft, 18);
+  doc.text("SENAI Bahia", marginLeft, 15);
 
-  doc.setFontSize(14);
-  doc.text("Plano de Ação SAEP 2026", marginLeft, 27);
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("Plano de Ação SAEP 2026 — Relatório Executivo IA", marginLeft, 23);
 
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setFont("helvetica", "normal");
-  doc.text(`Relatório Executivo de Análise IA • ${totalAcoes} ações analisadas`, marginLeft, 35);
+  doc.setTextColor(240, 244, 255);
+
+  const scopeText = `${totalAcoes} ${totalAcoes === 1 ? "ação analisada" : "ações analisadas"}`;
+  const filtersText = filtersSummary && filtersSummary !== "Todos" ? ` | Filtros: ${filtersSummary}` : "";
+  const subtitleLine = `Escopo: ${scopeText}${filtersText}`;
+  const maxSubtitleWidth = contentWidth - 50;
+  const subtitleLines = wrapTextSafe(doc, subtitleLine, maxSubtitleWidth);
+
+  for (let i = 0; i < Math.min(subtitleLines.length, 2); i++) {
+    doc.text(subtitleLines[i], marginLeft, 31 + i * 4);
+  }
 
   doc.setFontSize(8);
+  doc.setTextColor(220, 230, 250);
   doc.text(
     `Gerado em ${new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`,
     pageWidth - marginRight,
-    35,
+    31,
     { align: "right" }
   );
 
   doc.setTextColor(0, 0, 0);
 
-  let y = 55;
-
-  const ensurePageSpace = (requiredHeight: number) => {
-    if (y + requiredHeight > pageHeight - 18) {
-      doc.addPage();
-      y = 20;
-    }
-  };
+  let y = headerHeight + 10;
 
   blocks.forEach((block) => {
+    // ── HEADINGS ──
     if (block.type === "heading") {
-      const fontSize = block.level === 2 ? 12 : block.level === 3 ? 10 : 9;
-      const accentHeight = block.level === 2 ? 7 : 0;
+      const isPrimaryHeading = block.level === 1 || block.level === 2;
+      const fontSize = isPrimaryHeading ? 12 : block.level === 3 ? 10 : 9;
       doc.setFontSize(fontSize);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(block.level === 2 ? 30 : block.level === 3 ? 37 : 80, block.level === 2 ? 30 : 99, block.level === 2 ? 30 : block.level === 3 ? 235 : 80);
-      const wrapped = doc.splitTextToSize(block.text, block.level === 2 ? contentWidth - 6 : contentWidth);
-      const estimatedHeight = wrapped.length * (block.level === 2 ? 5 : 4.5) + (block.level === 2 ? 6 : 4);
-      ensurePageSpace(estimatedHeight);
 
-      if (block.level === 2) {
-        doc.setFillColor(37, 99, 235);
-        doc.rect(marginLeft, y - 1, 3, accentHeight, "F");
-        doc.text(wrapped, marginLeft + 6, y + 4);
-        y += wrapped.length * 5 + 6;
-      } else {
-        doc.text(wrapped, marginLeft, y + 3);
-        y += wrapped.length * 4.5 + 4;
+      const maxHeadingWidth = isPrimaryHeading ? contentWidth - 8 : contentWidth;
+      const lines = wrapTextSafe(doc, block.text, maxHeadingWidth);
+      const lineHeight = isPrimaryHeading ? 5 : 4.5;
+      const totalHeadingHeight = lines.length * lineHeight + (isPrimaryHeading ? 6 : 4);
+
+      // Prevent orphaned heading at the bottom of the page
+      if (y + totalHeadingHeight + 12 > pageHeight - marginBottom) {
+        doc.addPage();
+        y = marginTop;
       }
 
+      if (isPrimaryHeading) {
+        doc.setTextColor(22, 65, 148);
+        doc.setFillColor(37, 99, 235);
+        doc.rect(marginLeft, y, 3, Math.max(7, lines.length * lineHeight), "F");
+        for (let i = 0; i < lines.length; i++) {
+          doc.text(lines[i], marginLeft + 6, y + 4.5 + i * lineHeight);
+        }
+        y += totalHeadingHeight;
+      } else {
+        doc.setTextColor(block.level === 3 ? 37 : 80, block.level === 3 ? 99 : 80, block.level === 3 ? 235 : 80);
+        for (let i = 0; i < lines.length; i++) {
+          doc.text(lines[i], marginLeft, y + 3.5 + i * lineHeight);
+        }
+        y += totalHeadingHeight;
+      }
       return;
     }
 
+    // ── TABLES ──
     if (block.type === "table") {
       const table = tables[block.tableIndex];
-      if (!table) return;
-      ensurePageSpace(24);
+      if (!table || !table.headers.length) return;
+
+      if (y + 20 > pageHeight - marginBottom) {
+        doc.addPage();
+        y = marginTop;
+      }
+
+      const columnStyles = buildColumnStyles(table.headers, contentWidth);
 
       autoTable(doc, {
         startY: y,
         head: [table.headers],
         body: table.rows,
-        margin: { left: marginLeft, right: marginRight },
+        margin: { left: marginLeft, right: marginRight, top: marginTop, bottom: marginBottom },
         tableWidth: contentWidth,
         theme: "grid",
         styles: {
           font: "helvetica",
-          fontSize: orientation === "landscape" ? 7.2 : 7.6,
-          cellPadding: { top: 2.6, right: 2.4, bottom: 2.6, left: 2.4 },
+          fontSize: orientation === "landscape" ? 7 : 7.5,
+          cellPadding: { top: 2.2, right: 2, bottom: 2.2, left: 2 },
           overflow: "linebreak",
           valign: "middle",
-          lineColor: [220, 220, 220],
+          lineColor: [220, 225, 230],
           lineWidth: 0.2,
-          minCellHeight: 7,
-          cellWidth: "wrap",
+          minCellHeight: 6,
         },
         headStyles: {
-          fillColor: [37, 99, 235],
+          fillColor: [22, 65, 148],
           textColor: [255, 255, 255],
           fontStyle: "bold",
-          fontSize: orientation === "landscape" ? 7.1 : 7.4,
+          fontSize: orientation === "landscape" ? 7.2 : 7.6,
           halign: "left",
           valign: "middle",
         },
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-        bodyStyles: { textColor: [40, 40, 40] },
-        columnStyles: buildColumnStyles(table.headers, contentWidth),
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        bodyStyles: { textColor: [30, 41, 59] },
+        columnStyles,
         rowPageBreak: "avoid",
         showHead: "everyPage",
       });
 
-      y = (doc as any).lastAutoTable.finalY + 7;
+      y = (doc as any).lastAutoTable.finalY + 6;
       return;
     }
 
+    // ── ALERTS ──
     if (block.type === "alert") {
       doc.setFontSize(8.5);
-      doc.setFont("helvetica", "bold");
-      const wrapped = doc.splitTextToSize(block.text, contentWidth - 8);
-      const boxHeight = wrapped.length * 4.2 + 6;
-      ensurePageSpace(boxHeight + 2);
+      doc.setFont("helvetica", "normal");
 
-      if (block.tone === "critical") {
-        doc.setFillColor(255, 240, 240);
-        doc.setDrawColor(200, 80, 80);
-        doc.setTextColor(180, 60, 60);
-      } else if (block.tone === "success") {
-        doc.setFillColor(239, 250, 244);
-        doc.setDrawColor(60, 160, 95);
-        doc.setTextColor(42, 109, 64);
+      const alertMaxWidth = contentWidth - 12;
+      const lines = wrapTextSafe(doc, block.text, alertMaxWidth);
+      const lineHeight = 4.2;
+      const boxHeight = lines.length * lineHeight + 6;
+
+      if (y + boxHeight <= pageHeight - marginBottom) {
+        if (block.tone === "critical") {
+          doc.setFillColor(254, 242, 242);
+          doc.setDrawColor(239, 68, 68);
+          doc.setTextColor(153, 27, 27);
+        } else if (block.tone === "success") {
+          doc.setFillColor(240, 253, 244);
+          doc.setDrawColor(34, 197, 94);
+          doc.setTextColor(22, 101, 52);
+        } else {
+          doc.setFillColor(239, 246, 255);
+          doc.setDrawColor(59, 130, 246);
+          doc.setTextColor(30, 64, 175);
+        }
+
+        doc.roundedRect(marginLeft, y, contentWidth, boxHeight, 1.5, 1.5, "F");
+        doc.setLineWidth(0.8);
+        doc.line(marginLeft, y, marginLeft, y + boxHeight);
+
+        doc.setFont("helvetica", "bold");
+        for (let i = 0; i < lines.length; i++) {
+          doc.text(lines[i], marginLeft + 5, y + 4.5 + i * lineHeight);
+        }
+        y += boxHeight + 4;
       } else {
-        doc.setFillColor(239, 246, 255);
-        doc.setDrawColor(59, 130, 246);
-        doc.setTextColor(30, 64, 175);
+        if (y + 16 > pageHeight - marginBottom) {
+          doc.addPage();
+          y = marginTop;
+        }
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(
+          block.tone === "critical" ? 153 : block.tone === "success" ? 22 : 30,
+          block.tone === "critical" ? 27 : block.tone === "success" ? 101 : 64,
+          block.tone === "critical" ? 27 : block.tone === "success" ? 52 : 175
+        );
+        for (let i = 0; i < lines.length; i++) {
+          if (y + lineHeight > pageHeight - marginBottom) {
+            doc.addPage();
+            y = marginTop;
+          }
+          doc.text(lines[i], marginLeft + 4, y + 2.5);
+          y += lineHeight;
+        }
+        y += 3;
       }
-
-      doc.roundedRect(marginLeft, y - 4, contentWidth, boxHeight, 2, 2, "F");
-      doc.setLineWidth(0.6);
-      doc.line(marginLeft, y - 4, marginLeft, y - 4 + boxHeight);
-      doc.text(wrapped, marginLeft + 4, y);
-      y += boxHeight + 2;
       return;
     }
 
+    // ── PARAGRAPHS & LIST ITEMS ──
     const isList = block.type === "bullet" || block.type === "numbered";
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(60, 60, 60);
-    const wrapped = doc.splitTextToSize(block.text, contentWidth - (isList ? 8 : 0));
-    const textHeight = wrapped.length * 4.2 + 3;
-    ensurePageSpace(textHeight);
+    doc.setTextColor(50, 50, 50);
 
-    if (block.type === "bullet") {
-      doc.setFillColor(37, 99, 235);
-      doc.circle(marginLeft + 2, y + 0.6, 0.8, "F");
-      doc.text(wrapped, marginLeft + 6, y + 2);
-    } else if (block.type === "numbered") {
-      doc.text(wrapped, marginLeft + 3, y + 2);
-    } else {
-      doc.text(wrapped, marginLeft, y + 2);
+    const indent = isList ? 6 : 0;
+    const maxWidth = contentWidth - indent;
+    const lines = wrapTextSafe(doc, block.text, maxWidth);
+    const lineHeight = 4.2;
+
+    for (let i = 0; i < lines.length; i++) {
+      if (y + lineHeight > pageHeight - marginBottom) {
+        doc.addPage();
+        y = marginTop;
+      }
+
+      if (i === 0 && block.type === "bullet") {
+        doc.setFillColor(37, 99, 235);
+        doc.circle(marginLeft + 2, y + 1.2, 0.8, "F");
+      }
+
+      doc.text(lines[i], marginLeft + indent, y + 2.5);
+      y += lineHeight;
     }
-
-    y += textHeight;
+    y += 2.5;
   });
 
-  // Footer on all pages
+  // ── FOOTER ON ALL PAGES ──
   const totalPages = doc.getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(150, 150, 150);
+    doc.setTextColor(140, 140, 140);
     const footerY = pageHeight - 8;
-    doc.text("SENAI Bahia — Plano de Ação SAEP 2026 — Relatório IA", marginLeft, footerY);
+    doc.text("SENAI Bahia — Plano de Ação SAEP 2026 — Relatório Executivo IA", marginLeft, footerY);
     doc.text(`Página ${p} de ${totalPages}`, pageWidth - marginRight, footerY, { align: "right" });
   }
 

@@ -4,7 +4,7 @@ export type PdfTable = {
 };
 
 export type ReportBlock =
-  | { type: "heading"; text: string; level: 2 | 3 | 4 }
+  | { type: "heading"; text: string; level: 1 | 2 | 3 | 4 }
   | { type: "paragraph"; text: string }
   | { type: "bullet"; text: string }
   | { type: "numbered"; text: string }
@@ -93,9 +93,9 @@ export function parseReportHtml(html: string): { blocks: ReportBlock[]; tables: 
         return;
       }
 
-      if (tag === "h2" || tag === "h3" || tag === "h4") {
+      if (tag === "h1" || tag === "h2" || tag === "h3" || tag === "h4") {
         const text = getElementText(element);
-        if (text) blocks.push({ type: "heading", text, level: Number(tag[1]) as 2 | 3 | 4 });
+        if (text) blocks.push({ type: "heading", text, level: Number(tag[1]) as 1 | 2 | 3 | 4 });
         return;
       }
 
@@ -113,7 +113,7 @@ export function parseReportHtml(html: string): { blocks: ReportBlock[]; tables: 
         return;
       }
 
-      if (["div", "section", "article"].includes(tag)) {
+      if (["div", "section", "article", "header", "main"].includes(tag)) {
         const tone = element.classList.contains("alert-critical")
           ? "critical"
           : element.classList.contains("alert-success")
@@ -144,21 +144,29 @@ export function parseReportHtml(html: string): { blocks: ReportBlock[]; tables: 
 
 export function getPreferredPdfOrientation(tables: PdfTable[]): "portrait" | "landscape" {
   const widestTable = tables.reduce((max, table) => Math.max(max, table.headers.length), 0);
-  return widestTable >= 6 ? "landscape" : "portrait";
+  return widestTable >= 5 ? "landscape" : "portrait";
 }
 
-export function buildColumnStyles(headers: string[], availableWidth: number) {
-  if (headers.length <= 4) return undefined;
+export function buildColumnStyles(headers: string[], availableWidth: number): Record<number, { cellWidth: number }> {
+  const colCount = headers.length;
+  if (colCount === 0) return {};
+  if (colCount === 1) return { 0: { cellWidth: availableWidth } };
 
-  const weights = headers.map((header) => Math.min(Math.max(header.length, 10), 24));
+  // Calculate weights based on header text lengths
+  const minWeight = 10;
+  const weights = headers.map((header) => Math.min(Math.max(header.length, minWeight), 28));
   const totalWeight = weights.reduce((sum, value) => sum + value, 0);
 
-  return Object.fromEntries(
-    headers.map((_, index) => [
-      index,
-      {
-        cellWidth: Math.max(22, (availableWidth * weights[index]) / totalWeight),
-      },
-    ])
-  );
+  const styles: Record<number, { cellWidth: number }> = {};
+  let accumulated = 0;
+
+  for (let i = 0; i < colCount - 1; i++) {
+    const w = Math.floor((weights[i] / totalWeight) * availableWidth * 10) / 10;
+    styles[i] = { cellWidth: w };
+    accumulated += w;
+  }
+
+  styles[colCount - 1] = { cellWidth: Math.max(10, Math.round((availableWidth - accumulated) * 10) / 10) };
+
+  return styles;
 }

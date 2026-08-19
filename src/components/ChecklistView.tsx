@@ -1,15 +1,16 @@
-import { useAcoes } from "@/hooks/useAcoes";
+import React from "react";
+import { useAcoesFilter } from "@/hooks/useAcoesFilter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 export default function ChecklistView() {
-  const { data: acoes, isLoading } = useAcoes();
+  const { filteredAcoes, isLoading } = useAcoesFilter();
 
-  // Agrupa primeiro por unidade e depois por curso
-  const byUnidade: Record<string, Record<string, typeof acoes>> = {};
+  // Agrupa primeiro por unidade e depois por curso utilizando o conjunto filtrado
+  const byUnidade: Record<string, Record<string, typeof filteredAcoes>> = {};
 
-  (acoes || []).forEach((a) => {
+  filteredAcoes.forEach((a) => {
     const unidade = a.unidade || "Sem Unidade";
     const curso = a.curso || "Sem Curso";
 
@@ -31,7 +32,7 @@ export default function ChecklistView() {
   return (
     <div className="space-y-4 animate-fade-in">
       <p className="text-sm text-muted-foreground">
-        Visão rápida para uso durante o workshop — verifica se cada ação tem meta, responsável e prazo definidos.
+        Visão rápida para acompanhamento — verifica se cada ação do conjunto selecionado possui meta, responsável e prazo definidos.
       </p>
 
       <div className="rounded-[0.875rem] border border-border bg-card overflow-x-auto shadow-md">
@@ -51,18 +52,17 @@ export default function ChecklistView() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  Carregando...
+                  Carregando checklist...
                 </TableCell>
               </TableRow>
             ) : !hasData ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  Nenhuma ação cadastrada.
+                  Nenhuma ação encontrada para os filtros ativos.
                 </TableCell>
               </TableRow>
             ) : (
               Object.entries(byUnidade).flatMap(([unidade, cursos]) => {
-                // Calcula o total de linhas desta unidade para fazer o rowSpan
                 const totalLinhasUnidade = Object.values(cursos).reduce(
                   (acc, items) => acc + (items?.length || 0),
                   0

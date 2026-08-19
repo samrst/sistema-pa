@@ -15,6 +15,21 @@ const dom = new JSDOM("<!doctype html><html><body><div id='root'></div></body></
 (global as any).CustomEvent = dom.window.CustomEvent;
 (global as any).UIEvent = dom.window.UIEvent;
 (global as any).MouseEvent = dom.window.MouseEvent;
+
+class MockPointerEvent extends dom.window.MouseEvent {
+  public pointerId?: number;
+  public pointerType?: string;
+  public isPrimary?: boolean;
+  constructor(type: string, params: any = {}) {
+    super(type, params);
+    this.pointerId = params.pointerId ?? 1;
+    this.pointerType = params.pointerType || "mouse";
+    this.isPrimary = params.isPrimary ?? true;
+  }
+}
+(global as any).PointerEvent = MockPointerEvent;
+(dom.window as any).PointerEvent = MockPointerEvent;
+
 (global as any).KeyboardEvent = dom.window.KeyboardEvent;
 (global as any).FocusEvent = dom.window.FocusEvent;
 (global as any).MutationObserver = dom.window.MutationObserver;
@@ -95,3 +110,6 @@ try {
     delete (global as any).Document.prototype.documentMode;
   }
 } catch {}
+
+import jsPDF from "jspdf";
+jsPDF.prototype.save = () => ({} as any);

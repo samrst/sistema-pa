@@ -2,20 +2,26 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Acao } from "@/hooks/useAcoes";
 
-export function exportAcoesPdf(acoes: Acao[]) {
+export function exportAcoesPdf(acoes: Acao[], filtersSummary?: string) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
   // Title
   doc.setFontSize(16);
-  doc.text("Workshop SAEP 2026 — Plano de Ações", 14, 15);
+  doc.text("Workshop SAEP 2026 — Plano de Ações", 14, 14);
   doc.setFontSize(9);
   doc.setTextColor(100);
-  doc.text(`SENAI Bahia • Exportado em ${new Date().toLocaleDateString("pt-BR")}`, 14, 21);
+
+  const summaryLine = filtersSummary ? `Filtros: ${filtersSummary}` : "Filtros: Todos";
+  doc.text(
+    `SENAI Bahia • Exportado em ${new Date().toLocaleDateString("pt-BR")} • ${acoes.length} ${acoes.length === 1 ? "ação" : "ações"} • ${summaryLine}`,
+    14,
+    20
+  );
   doc.setTextColor(0);
 
   // Summary table
   autoTable(doc, {
-    startY: 27,
+    startY: 25,
     head: [[
       "Unidade", "Curso", "Modalidade", "Cap.", "Ação", "Problema Identificado", "Tipo", "Responsável",
       "Status", "Prioridade", "Início", "Prazo",

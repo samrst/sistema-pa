@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   LayoutDashboard,
@@ -19,7 +19,8 @@ import AnalistaGemini from "@/components/AnalistaGemini";
 import AdminChat from "@/components/AdminChat";
 import LoginView from "@/components/LoginView";
 import UsuariosView from "@/components/UsuariosView";
-import { useAcoes } from "@/hooks/useAcoes";
+import FilterBar from "@/components/FilterBar";
+import { FilterProvider, useAcoesFilter, getFiltersSummary } from "@/contexts/FilterContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import "@/styles/header.css";
@@ -27,10 +28,10 @@ import "@/styles/footer.css";
 import "@/styles/help-button.css";
 import { exportAcoesPdf } from "@/lib/exportPdf";
 
-const Index = () => {
+const MainWorkspace = () => {
   const [tab, setTab] = useState("acoes");
-  const { data: acoes } = useAcoes();
-  const { user, isAuthenticated, isAdmin, isMacroprocesso, isLoading, logout } = useAuth();
+  const { user, isAdmin, isMacroprocesso, logout } = useAuth();
+  const { filteredAcoes, filters } = useAcoesFilter();
 
   const canAccessIA = isAdmin || isMacroprocesso;
 
@@ -50,27 +51,11 @@ const Index = () => {
     return "Usuário";
   };
 
-  // 1. Tela de carregamento enquanto valida token / sessão
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
-          <img src="/IMG/logo-senai.png" alt="SENAI" className="h-10 w-auto" />
-          <div className="flex items-center gap-2.5 text-primary font-semibold text-sm">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <span>Carregando plataforma...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleExportPdf = () => {
+    const summary = getFiltersSummary(filters);
+    exportAcoesPdf(filteredAcoes, summary);
+  };
 
-  // 2. Se não estiver autenticado, exibe a nova tela inicial de Login & Apresentação
-  if (!isAuthenticated) {
-    return <LoginView />;
-  }
-
-  // 3. Usuário autenticado acessa a plataforma completa
   return (
     <div className="min-h-screen bg-background">
       <header>
@@ -98,12 +83,13 @@ const Index = () => {
 
             <li>
               <Button
-                onClick={() => exportAcoesPdf(acoes || [])}
-                disabled={!acoes || acoes.length === 0}
+                onClick={handleExportPdf}
+                disabled={!filteredAcoes || filteredAcoes.length === 0}
                 className="bg-white/15 text-white border border-white/25 px-[18px] py-[10px] rounded-[8px] font-['Neo_Sans_Pro',sans-serif] italic text-[14px] font-semibold transition-all duration-300 ease-in-out hover:bg-white/25 hover:-translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                title="Exportar ações filtradas em PDF"
               >
                 <FileDown className="h-4 w-4 mr-2" />
-                Exportar PDF
+                Exportar PDF {filteredAcoes.length > 0 && `(${filteredAcoes.length})`}
               </Button>
             </li>
 
@@ -166,18 +152,38 @@ const Index = () => {
             )}
           </TabsList>
 
-          <TabsContent value="acoes">
+          {/* Abas Analíticas com FilterBar Contextual */}
+          <TabsContent value="acoes" className="space-y-4">
+            <div className="flex flex-col gap-0.5">
+              <h3 className="text-base font-bold text-foreground font-heading">Ações</h3>
+              <p className="text-xs text-muted-foreground">Gerencie e acompanhe as ações cadastradas no plano.</p>
+            </div>
+            <FilterBar />
             <AcoesTable isAdmin={isAdmin} />
           </TabsContent>
-          <TabsContent value="dashboard">
+
+          <TabsContent value="dashboard" className="space-y-4">
+            <div className="flex flex-col gap-0.5">
+              <h3 className="text-base font-bold text-foreground font-heading">Visão Geral</h3>
+              <p className="text-xs text-muted-foreground">Indicadores e análise consolidada das ações do Workshop SAEP.</p>
+            </div>
+            <FilterBar />
             <DashboardView />
           </TabsContent>
-          <TabsContent value="checklist">
+
+          <TabsContent value="checklist" className="space-y-4">
+            <div className="flex flex-col gap-0.5">
+              <h3 className="text-base font-bold text-foreground font-heading">Checklist</h3>
+              <p className="text-xs text-muted-foreground">Acompanhamento estruturado de metas, responsáveis e prazos por curso e unidade.</p>
+            </div>
+            <FilterBar />
             <ChecklistView />
           </TabsContent>
+
+          {/* Abas Não Analíticas ou com Escopo Próprio (SEM FilterBar) */}
           {canAccessIA && (
             <TabsContent value="analise">
-              <AnalistaGemini dadosAcoes={acoes || []} />
+              <AnalistaGemini />
             </TabsContent>
           )}
           {canAccessIA && (
@@ -210,4 +216,36 @@ const Index = () => {
   );
 };
 
+const Index = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // 1. Tela de carregamento enquanto valida token / sessão
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
+          <img src="/IMG/logo-senai.png" alt="SENAI" className="h-10 w-auto" />
+          <div className="flex items-center gap-2.5 text-primary font-semibold text-sm">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span>Carregando plataforma...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Se não estiver autenticado, exibe a tela inicial de Login & Apresentação
+  if (!isAuthenticated) {
+    return <LoginView />;
+  }
+
+  // 3. Usuário autenticado acessa o workspace encapsulado no FilterProvider
+  return (
+    <FilterProvider>
+      <MainWorkspace />
+    </FilterProvider>
+  );
+};
+
+export { MainWorkspace };
 export default Index;
