@@ -1,1 +1,9 @@
-export { useAcoesFilter, type FilterState, type FilterContextType, initialFilters } from "@/contexts/FilterContext";
+export {
+  useAcoesFilter,
+  type FilterState,
+  type FilterContextType,
+  type ScopeType,
+  initialFilters,
+  isMinhaAcao,
+  getFiltersSummary,
+} from "@/contexts/FilterContext";

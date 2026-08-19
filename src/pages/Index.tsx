@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   LayoutDashboard,
   TableProperties,
-  ClipboardCheck,
   BrainCircuit,
   LogOut,
   MessageSquare,
@@ -11,10 +10,11 @@ import {
   Loader2,
   CircleHelp,
   Users,
+  UserCheck,
+  Layers,
 } from "lucide-react";
 import AcoesTable from "@/components/AcoesTable";
 import DashboardView from "@/components/DashboardView";
-import ChecklistView from "@/components/ChecklistView";
 import AnalistaGemini from "@/components/AnalistaGemini";
 import AdminChat from "@/components/AdminChat";
 import LoginView from "@/components/LoginView";
@@ -23,26 +23,73 @@ import FilterBar from "@/components/FilterBar";
 import { FilterProvider, useAcoesFilter, getFiltersSummary } from "@/contexts/FilterContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import "@/styles/header.css";
 import "@/styles/footer.css";
 import "@/styles/help-button.css";
 import { exportAcoesPdf } from "@/lib/exportPdf";
 
-const MainWorkspace = () => {
-  const [tab, setTab] = useState("acoes");
-  const { user, isAdmin, isMacroprocesso, logout } = useAuth();
-  const { filteredAcoes, filters } = useAcoesFilter();
+const ScopeSelector = () => {
+  const { scope, setScope, totalAcoes, totalScopedAcoes } = useAcoesFilter();
 
-  const canAccessIA = isAdmin || isMacroprocesso;
+  return (
+    <div className="flex items-center gap-1 bg-muted/70 p-1 rounded-lg border border-border shadow-inner">
+      <button
+        type="button"
+        onClick={() => setScope("todas")}
+        className={cn(
+          "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5",
+          scope === "todas"
+            ? "bg-background text-foreground shadow-sm font-semibold"
+            : "text-muted-foreground hover:text-foreground"
+        )}
+      >
+        <Layers className="h-3.5 w-3.5" />
+        <span>Todas as ações</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setScope("minhas")}
+        className={cn(
+          "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5",
+          scope === "minhas"
+            ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+            : "text-muted-foreground hover:text-foreground"
+        )}
+      >
+        <UserCheck className="h-3.5 w-3.5" />
+        <span>Minhas ações</span>
+        {scope === "minhas" && (
+          <span className="ml-1 text-[11px] bg-primary-foreground/20 px-1.5 py-0.2 rounded-full">
+            {totalScopedAcoes}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+};
+
+const MainWorkspace = () => {
+  const { user, isAdmin, isMacroprocesso, isUsuario, logout } = useAuth();
+  const defaultTab = isAdmin ? "visao-geral" : "minha-unidade";
+  const [tab, setTab] = useState(defaultTab);
+  const { filteredAcoes, filters, scope } = useAcoesFilter();
+
+  const canAccessChatIA = isAdmin || isMacroprocesso;
 
   useEffect(() => {
-    if (!canAccessIA && (tab === "analise" || tab === "agente-admin")) {
-      setTab("acoes");
+    if (isAdmin) {
+      if (tab === "minha-unidade" || tab === "checklist" || tab === "dashboard") {
+        setTab("visao-geral");
+      }
+    } else {
+      if (tab === "acoes" || tab === "usuarios" || tab === "checklist" || tab === "dashboard") {
+        setTab("minha-unidade");
+      } else if (isUsuario && tab === "agente-admin") {
+        setTab("minha-unidade");
+      }
     }
-    if (!isAdmin && tab === "usuarios") {
-      setTab("acoes");
-    }
-  }, [canAccessIA, isAdmin, tab]);
+  }, [isAdmin, isUsuario, isMacroprocesso, tab]);
 
   const getPerfilLabel = () => {
     if (isAdmin) return "Admin";
@@ -52,7 +99,7 @@ const MainWorkspace = () => {
   };
 
   const handleExportPdf = () => {
-    const summary = getFiltersSummary(filters);
+    const summary = getFiltersSummary(filters, scope);
     exportAcoesPdf(filteredAcoes, summary);
   };
 
@@ -126,71 +173,122 @@ const MainWorkspace = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="mb-8 flex-wrap">
-            <TabsTrigger value="acoes" className="gap-1.5">
-              <TableProperties className="h-4 w-4" /> Ações
-            </TabsTrigger>
-            <TabsTrigger value="dashboard" className="gap-1.5">
-              <LayoutDashboard className="h-4 w-4" /> Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="checklist" className="gap-1.5">
-              <ClipboardCheck className="h-4 w-4" /> Checklist
-            </TabsTrigger>
-            {canAccessIA && (
-              <TabsTrigger value="analise" className="gap-1.5">
-                <BrainCircuit className="h-4 w-4" /> Análise IA
-              </TabsTrigger>
-            )}
-            {canAccessIA && (
-              <TabsTrigger value="agente-admin" className="gap-1.5">
-                <MessageSquare className="h-4 w-4" /> Agente Admin
-              </TabsTrigger>
-            )}
+            {/* ADMIN Tabs */}
             {isAdmin && (
-              <TabsTrigger value="usuarios" className="gap-1.5">
-                <Users className="h-4 w-4" /> Gestão de Acessos
-              </TabsTrigger>
+              <>
+                <TabsTrigger value="visao-geral" className="gap-1.5">
+                  <LayoutDashboard className="h-4 w-4" /> Visão Geral
+                </TabsTrigger>
+                <TabsTrigger value="acoes" className="gap-1.5">
+                  <TableProperties className="h-4 w-4" /> Ações
+                </TabsTrigger>
+                <TabsTrigger value="analise" className="gap-1.5">
+                  <BrainCircuit className="h-4 w-4" /> Análise IA
+                </TabsTrigger>
+                <TabsTrigger value="agente-admin" className="gap-1.5">
+                  <MessageSquare className="h-4 w-4" /> Chat IA
+                </TabsTrigger>
+                <TabsTrigger value="usuarios" className="gap-1.5">
+                  <Users className="h-4 w-4" /> Gestão de Acessos
+                </TabsTrigger>
+              </>
+            )}
+
+            {/* MACROPROCESSO_TECNICO Tabs */}
+            {isMacroprocesso && (
+              <>
+                <TabsTrigger value="minha-unidade" className="gap-1.5">
+                  <TableProperties className="h-4 w-4" /> Minha Unidade
+                </TabsTrigger>
+                <TabsTrigger value="visao-geral" className="gap-1.5">
+                  <LayoutDashboard className="h-4 w-4" /> Visão Geral
+                </TabsTrigger>
+                <TabsTrigger value="analise" className="gap-1.5">
+                  <BrainCircuit className="h-4 w-4" /> Análise IA
+                </TabsTrigger>
+                <TabsTrigger value="agente-admin" className="gap-1.5">
+                  <MessageSquare className="h-4 w-4" /> Chat IA
+                </TabsTrigger>
+              </>
+            )}
+
+            {/* USUARIO Tabs */}
+            {isUsuario && (
+              <>
+                <TabsTrigger value="minha-unidade" className="gap-1.5">
+                  <TableProperties className="h-4 w-4" /> Minha Unidade
+                </TabsTrigger>
+                <TabsTrigger value="visao-geral" className="gap-1.5">
+                  <LayoutDashboard className="h-4 w-4" /> Visão Geral
+                </TabsTrigger>
+                <TabsTrigger value="analise" className="gap-1.5">
+                  <BrainCircuit className="h-4 w-4" /> Análise IA
+                </TabsTrigger>
+              </>
             )}
           </TabsList>
 
-          {/* Abas Analíticas com FilterBar Contextual */}
-          <TabsContent value="acoes" className="space-y-4">
-            <div className="flex flex-col gap-0.5">
-              <h3 className="text-base font-bold text-foreground font-heading">Ações</h3>
-              <p className="text-xs text-muted-foreground">Gerencie e acompanhe as ações cadastradas no plano.</p>
-            </div>
-            <FilterBar />
-            <AcoesTable isAdmin={isAdmin} />
-          </TabsContent>
-
-          <TabsContent value="dashboard" className="space-y-4">
-            <div className="flex flex-col gap-0.5">
-              <h3 className="text-base font-bold text-foreground font-heading">Visão Geral</h3>
-              <p className="text-xs text-muted-foreground">Indicadores e análise consolidada das ações do Workshop SAEP.</p>
+          {/* ABA VISÃO GERAL */}
+          <TabsContent value="visao-geral" className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-col gap-0.5">
+                <h3 className="text-base font-bold text-foreground font-heading">Visão Geral</h3>
+                <p className="text-xs text-muted-foreground">Indicadores e análise consolidada das ações do Workshop SAEP.</p>
+              </div>
+              <ScopeSelector />
             </div>
             <FilterBar />
             <DashboardView />
+            {!isAdmin && (
+              <div className="pt-4 border-t border-border space-y-3">
+                <AcoesTable isAdmin={false} isReadOnly={true} title="Ações Consolidadas (Visão Geral)" />
+              </div>
+            )}
           </TabsContent>
 
-          <TabsContent value="checklist" className="space-y-4">
-            <div className="flex flex-col gap-0.5">
-              <h3 className="text-base font-bold text-foreground font-heading">Checklist</h3>
-              <p className="text-xs text-muted-foreground">Acompanhamento estruturado de metas, responsáveis e prazos por curso e unidade.</p>
-            </div>
-            <FilterBar />
-            <ChecklistView />
-          </TabsContent>
-
-          {/* Abas Não Analíticas ou com Escopo Próprio (SEM FilterBar) */}
-          {canAccessIA && (
-            <TabsContent value="analise">
-              <AnalistaGemini />
+          {/* ABA AÇÕES (ADMIN Exclusivo) */}
+          {isAdmin && (
+            <TabsContent value="acoes" className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col gap-0.5">
+                  <h3 className="text-base font-bold text-foreground font-heading">Ações</h3>
+                  <p className="text-xs text-muted-foreground">Gerencie e acompanhe as ações cadastradas no plano.</p>
+                </div>
+                <ScopeSelector />
+              </div>
+              <FilterBar />
+              <AcoesTable isAdmin={true} isReadOnly={false} title="Ações" />
             </TabsContent>
           )}
-          {canAccessIA && (
+
+          {/* ABA MINHA UNIDADE (Macroprocesso e Usuário) */}
+          {(isMacroprocesso || isUsuario) && (
+            <TabsContent value="minha-unidade" className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col gap-0.5">
+                  <h3 className="text-base font-bold text-foreground font-heading">Minha Unidade</h3>
+                  <p className="text-xs text-muted-foreground">Acompanhe e gerencie as ações das unidades autorizadas.</p>
+                </div>
+                <ScopeSelector />
+              </div>
+              <FilterBar />
+              <AcoesTable isAdmin={false} isReadOnly={false} title="Minha Unidade" />
+            </TabsContent>
+          )}
+
+          {/* ABA ANÁLISE IA (Disponível para todos os perfis) */}
+          <TabsContent value="analise">
+            <AnalistaGemini />
+          </TabsContent>
+
+          {/* ABA CHAT IA (ADMIN e MACROPROCESSO_TECNICO) */}
+          {canAccessChatIA && (
             <TabsContent value="agente-admin">
               <AdminChat />
             </TabsContent>
           )}
+
+          {/* ABA GESTÃO DE ACESSOS (ADMIN Exclusivo) */}
           {isAdmin && (
             <TabsContent value="usuarios">
               <UsuariosView />

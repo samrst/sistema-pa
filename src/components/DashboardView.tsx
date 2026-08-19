@@ -4,8 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { ClipboardList, CheckCircle2, AlertTriangle, Clock, X, Pencil, FilterX } from "lucide-react";
+import { ClipboardList, CheckCircle2, AlertTriangle, Clock, Pencil, FilterX, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AcaoFormDialog from "@/components/AcaoFormDialog";
 import type { Acao } from "@/hooks/useAcoes";
@@ -29,11 +30,14 @@ type DrilldownType = "total" | "concluidas" | "emAndamento" | "atrasadas" | null
 
 export default function DashboardView() {
   const { user, isAdmin, isMacroprocesso, isUsuario } = useAuth();
-  const { filteredAcoes, totalAcoes, hasActiveFilters } = useAcoesFilter();
+  const { filteredAcoes, baseAcoes, totalAcoes, hasActiveFilters, availableUnidades } = useAcoesFilter();
 
   const [activeDrilldown, setActiveDrilldown] = useState<DrilldownType>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editData, setEditData] = useState<Acao | null>(null);
+
+  // Toggle for Macro and Usuario: "minhas-unidades" vs "visao-geral"
+  const [dashboardScope, setDashboardScope] = useState<"minhas-unidades" | "visao-geral">("minhas-unidades");
 
   const canEditAcao = (a: Acao) => {
     if (isAdmin) return true;
@@ -48,14 +52,29 @@ export default function DashboardView() {
     return false;
   };
 
-  // KPIs derived strictly from filteredAcoes
-  const total = filteredAcoes.length;
-  const concluidas = useMemo(() => filteredAcoes.filter((a) => a.status === "Concluído").length, [filteredAcoes]);
-  const emAndamento = useMemo(() => filteredAcoes.filter((a) => a.status === "Em andamento").length, [filteredAcoes]);
+  // Determine active actions for dashboard analytics
+  const activeDashboardAcoes = useMemo(() => {
+    if (isAdmin) return filteredAcoes;
+    if (dashboardScope === "visao-geral") {
+      // In general view for macro/usuario, filtered by user's filterbar selections on all available actions
+      return filteredAcoes;
+    }
+    // "minhas-unidades": filter actions belonging to user's assigned units
+    if (user?.unidades?.length) {
+      const userUnitNames = user.unidades.map((u) => u.nome.toLowerCase());
+      return filteredAcoes.filter((a) => userUnitNames.includes(a.unidade.toLowerCase()));
+    }
+    return filteredAcoes;
+  }, [filteredAcoes, isAdmin, dashboardScope, user]);
+
+  // KPIs derived strictly from activeDashboardAcoes
+  const total = activeDashboardAcoes.length;
+  const concluidas = useMemo(() => activeDashboardAcoes.filter((a) => a.status === "Concluído").length, [activeDashboardAcoes]);
+  const emAndamento = useMemo(() => activeDashboardAcoes.filter((a) => a.status === "Em andamento").length, [activeDashboardAcoes]);
   const atrasadas = useMemo(() => {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    return filteredAcoes.filter((a) => {
+    return activeDashboardAcoes.filter((a) => {
       if (!a.data_fim || a.status === "Concluído") return false;
       const datePart = a.data_fim.includes("T") ? a.data_fim.split("T")[0] : a.data_fim;
       const [y, m, d] = datePart.split("-");
@@ -63,7 +82,7 @@ export default function DashboardView() {
       dataFim.setHours(0, 0, 0, 0);
       return dataFim < hoje;
     }).length;
-  }, [filteredAcoes]);
+  }, [activeDashboardAcoes]);
 
   const pctConcluidas = total ? Math.round((concluidas / total) * 100) : 0;
 
@@ -74,16 +93,16 @@ export default function DashboardView() {
     { key: "atrasadas" as DrilldownType, label: "Atrasadas", value: atrasadas, icon: AlertTriangle, color: "text-destructive", activeBg: "ring-2 ring-destructive bg-destructive/5" },
   ];
 
-  // Drilldown list derived from filteredAcoes
+  // Drilldown list derived from activeDashboardAcoes
   const drilldownAcoes = useMemo(() => {
     if (!activeDrilldown) return [];
-    if (activeDrilldown === "total") return filteredAcoes;
-    if (activeDrilldown === "concluidas") return filteredAcoes.filter((a) => a.status === "Concluído");
-    if (activeDrilldown === "emAndamento") return filteredAcoes.filter((a) => a.status === "Em andamento");
+    if (activeDrilldown === "total") return activeDashboardAcoes;
+    if (activeDrilldown === "concluidas") return activeDashboardAcoes.filter((a) => a.status === "Concluído");
+    if (activeDrilldown === "emAndamento") return activeDashboardAcoes.filter((a) => a.status === "Em andamento");
     if (activeDrilldown === "atrasadas") {
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
-      return filteredAcoes.filter((a) => {
+      return activeDashboardAcoes.filter((a) => {
         if (!a.data_fim || a.status === "Concluído") return false;
         const datePart = a.data_fim.includes("T") ? a.data_fim.split("T")[0] : a.data_fim;
         const [y, m, d] = datePart.split("-");
@@ -93,63 +112,108 @@ export default function DashboardView() {
       });
     }
     return [];
-  }, [activeDrilldown, filteredAcoes]);
+  }, [activeDrilldown, activeDashboardAcoes]);
 
-  // Chart 1: By Unidade
+  // Panorama das Unidades (Admin only - consolidated view across all units)
+  const panoramaData = useMemo(() => {
+    if (!isAdmin) return [];
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const unitsMap: Record<string, { total: number; concluidas: number; emAndamento: number; vencidas: number }> = {};
+
+    baseAcoes.forEach((a) => {
+      const u = a.unidade || "Não informada";
+      if (!unitsMap[u]) {
+        unitsMap[u] = { total: 0, concluidas: 0, emAndamento: 0, vencidas: 0 };
+      }
+      unitsMap[u].total += 1;
+      if (a.status === "Concluído") {
+        unitsMap[u].concluidas += 1;
+      } else if (a.status === "Em andamento") {
+        unitsMap[u].emAndamento += 1;
+      }
+
+      if (a.data_fim && a.status !== "Concluído") {
+        const datePart = a.data_fim.includes("T") ? a.data_fim.split("T")[0] : a.data_fim;
+        const [y, m, d] = datePart.split("-");
+        const dataFim = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+        dataFim.setHours(0, 0, 0, 0);
+        if (dataFim < hoje) {
+          unitsMap[u].vencidas += 1;
+        }
+      }
+    });
+
+    return Object.entries(unitsMap)
+      .map(([unidade, data]) => ({
+        unidade,
+        total: data.total,
+        concluidas: data.concluidas,
+        emAndamento: data.emAndamento,
+        vencidas: data.vencidas,
+        pct: data.total > 0 ? Math.round((data.concluidas / data.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [baseAcoes, isAdmin]);
+
+  // Chart 1: By Unidade (Horizontal Bars)
+  // For macro/usuario, always derive from baseAcoes to provide comparative overview
   const unidadeData = useMemo(() => {
     const counts: Record<string, number> = {};
-    filteredAcoes.forEach((a) => {
+    const dataset = isAdmin ? activeDashboardAcoes : baseAcoes;
+    dataset.forEach((a) => {
       const name = a.unidade || "Não informada";
       counts[name] = (counts[name] || 0) + 1;
     });
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [filteredAcoes]);
+  }, [activeDashboardAcoes, baseAcoes, isAdmin]);
 
   // Chart 2: By Modalidade
   const modalidadeData = useMemo(() => {
     const counts: Record<string, number> = {};
-    filteredAcoes.forEach((a) => {
+    activeDashboardAcoes.forEach((a) => {
       const name = a.modalidade || "Presencial";
       counts[name] = (counts[name] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [filteredAcoes]);
+  }, [activeDashboardAcoes]);
 
   // Chart 3: By Curso
   const cursoData = useMemo(() => {
     const counts: Record<string, number> = {};
-    filteredAcoes.forEach((a) => {
+    activeDashboardAcoes.forEach((a) => {
       const name = (a.curso || "Não informado").replace("Técnico em ", "");
       counts[name] = (counts[name] || 0) + 1;
     });
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [filteredAcoes]);
+  }, [activeDashboardAcoes]);
 
   // Chart 4: By Status
   const statusData = useMemo(() => {
     const counts: Record<string, number> = {};
-    filteredAcoes.forEach((a) => {
+    activeDashboardAcoes.forEach((a) => {
       const name = a.status || "Indefinido";
       counts[name] = (counts[name] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [filteredAcoes]);
+  }, [activeDashboardAcoes]);
 
   // Chart 5: By Tipo de Ação
   const tipoData = useMemo(() => {
     const counts: Record<string, number> = {};
-    filteredAcoes.forEach((a) => {
+    activeDashboardAcoes.forEach((a) => {
       const name = a.tipo_acao || "Outros";
       counts[name] = (counts[name] || 0) + 1;
     });
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [filteredAcoes]);
+  }, [activeDashboardAcoes]);
 
   const drilldownTitle: Record<NonNullable<DrilldownType>, string> = {
     total: "Todas as Ações Filtradas",
@@ -160,6 +224,34 @@ export default function DashboardView() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Top Toggle for Macroprocesso & Usuario */}
+      {!isAdmin && (
+        <div className="flex items-center justify-between bg-card p-3 rounded-[0.875rem] border border-border shadow-sm">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">Visualização do Dashboard:</span>
+          </div>
+          <div className="flex gap-1.5">
+            <Button
+              variant={dashboardScope === "minhas-unidades" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDashboardScope("minhas-unidades")}
+              className="text-xs h-8"
+            >
+              Minhas unidades
+            </Button>
+            <Button
+              variant={dashboardScope === "visao-geral" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDashboardScope("visao-geral")}
+              className="text-xs h-8"
+            >
+              Visão geral
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Cards Superiores (KPIs) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
@@ -260,6 +352,60 @@ export default function DashboardView() {
                 </Table>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Panorama das Unidades (ADMIN Exclusivo) */}
+      {isAdmin && panoramaData.length > 0 && (
+        <Card className="border border-border shadow-md">
+          <CardHeader className="border-b border-border pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-heading text-primary">Panorama das Unidades</CardTitle>
+              <Badge variant="outline" className="text-xs font-normal">
+                Visão Consolidada ({panoramaData.length} unidades)
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Unidade</TableHead>
+                  <TableHead className="text-center">Total Ações</TableHead>
+                  <TableHead className="text-center">Concluídas</TableHead>
+                  <TableHead className="text-center">Em Andamento</TableHead>
+                  <TableHead className="text-center">Vencidas</TableHead>
+                  <TableHead className="text-center">% Conclusão</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {panoramaData.map((row) => (
+                  <TableRow key={row.unidade} className="hover:bg-primary/5 transition-colors">
+                    <TableCell className="font-medium text-sm text-foreground">{row.unidade}</TableCell>
+                    <TableCell className="text-center text-sm font-semibold">{row.total}</TableCell>
+                    <TableCell className="text-center text-sm text-success font-medium">{row.concluidas}</TableCell>
+                    <TableCell className="text-center text-sm text-info font-medium">{row.emAndamento}</TableCell>
+                    <TableCell className="text-center text-sm text-destructive font-medium">{row.vencidas}</TableCell>
+                    <TableCell className="text-center text-sm">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs font-semibold",
+                          row.pct >= 70
+                            ? "bg-success/15 text-success border-success/30"
+                            : row.pct >= 40
+                            ? "bg-warning/15 text-warning border-warning/30"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {row.pct}%
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}

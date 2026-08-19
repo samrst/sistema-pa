@@ -134,7 +134,7 @@ describe("PHASE 6.6 — Gestão de Usuários, Perfis e Acessos no Frontend", () 
     const { queryByRole, getByRole } = renderWithProviders(<Index />);
 
     await waitFor(() => {
-      expect(getByRole("tab", { name: /Ações/i })).toBeTruthy();
+      expect(getByRole("tab", { name: /Minha Unidade/i })).toBeTruthy();
     });
 
     expect(queryByRole("tab", { name: /Gestão de Acessos/i })).toBeNull();

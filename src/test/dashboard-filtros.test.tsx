@@ -4,10 +4,9 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { render, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "../contexts/AuthContext";
-import { FilterProvider, useAcoesFilter } from "../contexts/FilterContext";
+import { FilterProvider, useAcoesFilter, matchPersonName, isMinhaAcao, getFiltersSummary } from "../contexts/FilterContext";
 import DashboardView from "../components/DashboardView";
 import AcoesTable from "../components/AcoesTable";
-import ChecklistView from "../components/ChecklistView";
 import FilterBar from "../components/FilterBar";
 import AnalistaGemini from "../components/AnalistaGemini";
 import { MainWorkspace } from "../pages/Index";
@@ -236,7 +235,7 @@ describe("PHASE 7.1 — Dashboards Reativos, Visão Geral, Filtros Globais e Rel
       );
     };
 
-    const { getByText, getByTestId, findByText } = renderWithFilterContext(<TestComponent />, mockAdminUser);
+    const { getByText, getAllByText, getByTestId, findByText } = renderWithFilterContext(<TestComponent />, mockAdminUser);
 
     await findByText("Total de Ações");
     await waitFor(() => {
@@ -247,9 +246,10 @@ describe("PHASE 7.1 — Dashboards Reativos, Visão Geral, Filtros Globais e Rel
 
     await waitFor(() => {
       expect(getByTestId("kpi-total").textContent).toBe("1");
-      expect(getByText("100%")).toBeTruthy();
+      expect(getAllByText("100%").length).toBeGreaterThanOrEqual(1);
     });
   });
+
 
   // 2. Filtro de Unidade altera gráficos
   it("2. Filtro de Unidade altera os dados consolidados para os gráficos", async () => {
@@ -594,8 +594,8 @@ describe("PHASE 7.1 — Dashboards Reativos, Visão Geral, Filtros Globais e Rel
     });
   });
 
-  // 17. Dashboard, Checklist e Tabela utilizam o mesmo conjunto filtrado
-  it("17. Sincronismo total: Dashboard, Checklist e Tabela compartilham o mesmo estado filtrado", async () => {
+  // 17. Sincronismo total: Dashboard e Tabela compartilham o mesmo estado filtrado
+  it("17. Sincronismo total: Dashboard e Tabela compartilham o mesmo estado filtrado", async () => {
     const TestWorkspace = () => {
       const { setFilter, filteredAcoes } = useAcoesFilter();
       return (
@@ -624,8 +624,8 @@ describe("PHASE 7.1 — Dashboards Reativos, Visão Geral, Filtros Globais e Rel
     });
   });
 
-  // 18. FilterBar contextual: aparece em Ações, Visão Geral e Checklist, e NÃO em Gestão de Acessos ou AdminChat
-  it("18. FilterBar aparece nas abas analíticas (Ações, Visão Geral, Checklist) e não em Gestão de Acessos ou AdminChat", async () => {
+  // 18. FilterBar contextual: aparece em Visão Geral, Ações e Minha Unidade, e NÃO em Gestão de Acessos ou Chat IA
+  it("18. FilterBar aparece nas abas analíticas (Visão Geral, Ações) e não em Gestão de Acessos ou Chat IA", async () => {
     const { getByRole, queryByText, findByText, queryByPlaceholderText } = renderWithFilterContext(
       <MainWorkspace />,
       mockAdminUser
@@ -634,36 +634,29 @@ describe("PHASE 7.1 — Dashboards Reativos, Visão Geral, Filtros Globais e Rel
     const clickTab = (trigger: HTMLElement) => {
       fireEvent.focus(trigger);
       fireEvent.keyDown(trigger, { key: "Enter", code: "Enter" });
-      fireEvent.keyDown(trigger, { key: " " });
       fireEvent.click(trigger);
     };
 
-    // 1. Aba Ações: FilterBar presente
-    await findByText("Oficina de Testes Unitários");
+    // 1. Aba Visão Geral (inicial do Admin): FilterBar presente
+    await findByText("Indicadores e análise consolidada das ações do Workshop SAEP.");
     expect(queryByText("Todas as unidades")).toBeTruthy();
     expect(queryByText("Mais Filtros")).toBeTruthy();
 
-    // 2. Troca para Dashboard: FilterBar presente
-    const dashboardTab = await waitFor(() => getByRole("tab", { name: /Dashboard/i }));
-    clickTab(dashboardTab);
-    await findByText("Visão Geral");
+    // 2. Troca para Ações: FilterBar presente
+    const acoesTab = await waitFor(() => getByRole("tab", { name: /Ações/i }));
+    clickTab(acoesTab);
+    await findByText("Oficina de Testes Unitários");
     expect(queryByText("Todas as unidades")).toBeTruthy();
 
-    // 3. Troca para Checklist: FilterBar presente
-    const checklistTab = await waitFor(() => getByRole("tab", { name: /Checklist/i }));
-    clickTab(checklistTab);
-    await findByText("Acompanhamento estruturado de metas, responsáveis e prazos por curso e unidade.");
-    expect(queryByText("Todas as unidades")).toBeTruthy();
-
-    // 4. Troca para Gestão de Acessos: FilterBar NÃO deve existir
+    // 3. Troca para Gestão de Acessos: FilterBar NÃO deve existir
     const usuariosTab = await waitFor(() => getByRole("tab", { name: /Gestão de Acessos/i }));
     clickTab(usuariosTab);
     await findByText("Gestão de Usuários e Acessos");
     expect(queryByPlaceholderText("Buscar ações por título, responsável, problema, curso...")).toBeNull();
     expect(queryByText("Mais Filtros")).toBeNull();
 
-    // 5. Troca para Agente Admin (Chat IA): FilterBar NÃO deve existir
-    const adminChatTab = await waitFor(() => getByRole("tab", { name: /Agente Admin/i }));
+    // 4. Troca para Chat IA: FilterBar NÃO deve existir
+    const adminChatTab = await waitFor(() => getByRole("tab", { name: /Chat IA/i }));
     clickTab(adminChatTab);
     await findByText("Agente IA — Assessoria Estratégica");
     expect(queryByPlaceholderText("Buscar ações por título, responsável, problema, curso...")).toBeNull();
@@ -696,32 +689,27 @@ describe("PHASE 7.1 — Dashboards Reativos, Visão Geral, Filtros Globais e Rel
       fireEvent.click(trigger);
     };
 
-    await findByText("Oficina de Testes Unitários");
-    await findByText("Aquisição de Bancadas");
+    await findByText("Indicadores e análise consolidada das ações do Workshop SAEP.");
 
     // Aplica busca por 'Oficina'
     fireEvent.click(getByText("Aplicar Busca Oficina"));
 
-    await waitFor(() => {
-      expect(queryByText("Aquisição de Bancadas")).toBeNull();
-      expect(queryByText("Oficina de Testes Unitários")).toBeTruthy();
-    });
-
     const tabs = getAllByRole("tab");
-    const acoesTab = tabs[0];
-    const dashboardTab = tabs[1];
+    const visaoGeralTab = tabs[0];
+    const acoesTab = tabs[1];
 
-    // Troca para Dashboard
-    clickTab(dashboardTab);
-    await findByText("Visão Geral");
-    expect(dashboardTab.getAttribute("data-state")).toBe("active");
-
-    // Troca de volta para Ações: o filtro ainda está ativo!
+    // Troca para Ações: o filtro ainda está ativo!
     clickTab(acoesTab);
     await waitFor(() => {
       expect(acoesTab.getAttribute("data-state")).toBe("active");
       expect(queryByText("Aquisição de Bancadas")).toBeNull();
       expect(queryByText("Oficina de Testes Unitários")).toBeTruthy();
+    });
+
+    // Troca de volta para Visão Geral
+    clickTab(visaoGeralTab);
+    await waitFor(() => {
+      expect(visaoGeralTab.getAttribute("data-state")).toBe("active");
     });
   });
 
@@ -803,5 +791,181 @@ describe("PHASE 7.1 — Dashboards Reativos, Visão Geral, Filtros Globais e Rel
     const styles7 = buildColumnStyles(headers7, width);
     const sum7 = Object.values(styles7).reduce((acc, col) => acc + col.cellWidth, 0);
     expect(Math.abs(sum7 - width)).toBeLessThan(0.5);
+  });
+
+  // 24. Comparação de nomes segura (matchPersonName)
+  it("24. matchPersonName lida corretamente com prefixos, acentos, separadores e evita falsos positivos", () => {
+    expect(matchPersonName("Prof. Roberto Silva", "Roberto Silva")).toBe(true);
+    expect(matchPersonName("Coord. João Paulo", "João Paulo")).toBe(true);
+    expect(matchPersonName("Professora Maria Santos", "Maria Santos")).toBe(true);
+    expect(matchPersonName("Maria Santos, João Paulo, Roberto Silva", "João Paulo")).toBe(true);
+    expect(matchPersonName("Maria / Roberto", "Roberto")).toBe(true);
+
+    // Evita falsos positivos de substring ingênua
+    expect(matchPersonName("Mariana Santos", "Ana")).toBe(false);
+    expect(matchPersonName("Luciana Ribeiro", "Ana")).toBe(false);
+    expect(matchPersonName("Paulo Roberto", "Beto")).toBe(false);
+  });
+
+  // 25. isMinhaAcao identifica criador, responsável e co-responsável
+  it("25. isMinhaAcao identifica união OR de criador, responsável principal e co-responsável", () => {
+    const userA = { id: "user-1", nome: "João Silva", email: "joao@senai.br", perfil: "USUARIO" as const, unidades: [] };
+
+    // 1. Criador
+    const acaoCriador: Acao = { ...mockAcoesList[0], usuario_criador_id: "user-1", responsavel_principal: "Outro", co_responsaveis: null };
+    expect(isMinhaAcao(acaoCriador, userA)).toBe(true);
+
+    // 2. Responsável Principal
+    const acaoResp: Acao = { ...mockAcoesList[0], usuario_criador_id: "outro", responsavel_principal: "Prof. João Silva", co_responsaveis: null };
+    expect(isMinhaAcao(acaoResp, userA)).toBe(true);
+
+    // 3. Co-responsável
+    const acaoCoResp: Acao = { ...mockAcoesList[0], usuario_criador_id: "outro", responsavel_principal: "Outro", co_responsaveis: "Maria Santos, João Silva" };
+    expect(isMinhaAcao(acaoCoResp, userA)).toBe(true);
+
+    // 4. Não relacionado
+    const acaoNaoRel: Acao = { ...mockAcoesList[0], usuario_criador_id: "outro", responsavel_principal: "Maria Santos", co_responsaveis: null };
+    expect(isMinhaAcao(acaoNaoRel, userA)).toBe(false);
+  });
+
+  // 26. Scope Filter: "Todas as ações" vs "Minhas ações"
+  it("26. Scope Filter alterna baseAcoes entre todas e minhas ações", async () => {
+    const customUser = { id: "usuario-1", nome: "Prof. Roberto", email: "roberto@fbest.org.br", perfil: "USUARIO" as const, unidades: [] };
+
+    const TestScopeComponent = () => {
+      const { scope, setScope, baseAcoes, filteredAcoes } = useAcoesFilter();
+      return (
+        <div>
+          <button onClick={() => setScope("minhas")}>Selecionar Minhas</button>
+          <button onClick={() => setScope("todas")}>Selecionar Todas</button>
+          <div data-testid="scope-val">{scope}</div>
+          <div data-testid="base-count">{baseAcoes.length}</div>
+          <div data-testid="filtered-count">{filteredAcoes.length}</div>
+        </div>
+      );
+    };
+
+    const { getByText, getByTestId, findByText } = renderWithFilterContext(<TestScopeComponent />, customUser);
+
+    await findByText("Selecionar Minhas");
+    expect(getByTestId("scope-val").textContent).toBe("todas");
+    expect(getByTestId("base-count").textContent).toBe("3");
+
+    fireEvent.click(getByText("Selecionar Minhas"));
+
+    await waitFor(() => {
+      expect(getByTestId("scope-val").textContent).toBe("minhas");
+      // mockAcoesList[0] has usuario_criador_id="usuario-1" and responsavel_principal="Prof. Roberto"
+      expect(getByTestId("base-count").textContent).toBe("1");
+      expect(getByTestId("filtered-count").textContent).toBe("1");
+    });
+  });
+
+  // 27. getFiltersSummary inclui 'Escopo: Minhas ações' quando ativo
+  it("27. getFiltersSummary inclui escopo Minhas ações", () => {
+    const summaryTodas = getFiltersSummary({ ...useAcoesFilter.prototype?.filters, unidade: "all", curso: "all", modalidade: "all", status: "all", criticidade: "all", prioridade: "all", risco: "all", capacidade_saep: "all", tipo_acao: "all", situacaoPrazo: "all", search: "" }, "todas");
+    expect(summaryTodas).toBe("Todos");
+
+    const summaryMinhas = getFiltersSummary({ ...useAcoesFilter.prototype?.filters, unidade: "all", curso: "all", modalidade: "all", status: "all", criticidade: "all", prioridade: "all", risco: "all", capacidade_saep: "all", tipo_acao: "all", situacaoPrazo: "all", search: "" }, "minhas");
+    expect(summaryMinhas).toContain("Escopo: Minhas ações");
+  });
+
+  // 28. Navegação e abas do ADMIN: inicial Visão Geral, sem Minha Unidade, sem Checklist
+  it("28. ADMIN inicia em Visão Geral e não possui aba Minha Unidade nem Checklist", async () => {
+    const { getAllByRole, queryByRole, findByText } = renderWithFilterContext(
+      <MainWorkspace />,
+      mockAdminUser
+    );
+
+    await findByText("Indicadores e análise consolidada das ações do Workshop SAEP.");
+    const tabs = getAllByRole("tab");
+    const tabNames = tabs.map((t) => t.textContent?.trim());
+
+    expect(tabNames).toContain("Visão Geral");
+    expect(tabNames).toContain("Ações");
+    expect(tabNames).toContain("Análise IA");
+    expect(tabNames).toContain("Chat IA");
+    expect(tabNames).toContain("Gestão de Acessos");
+
+    expect(tabNames.some((t) => t?.includes("Minha Unidade"))).toBe(false);
+    expect(tabNames.some((t) => t?.includes("Checklist"))).toBe(false);
+  });
+
+  // 29. Navegação e abas do MACROPROCESSO_TECNICO: inicial Minha Unidade, com Chat IA, sem Gestão de Acessos, sem Checklist
+  it("29. MACROPROCESSO_TECNICO inicia em Minha Unidade e possui Chat IA sem Gestão de Acessos", async () => {
+    const { getAllByRole, queryByRole, findByText } = renderWithFilterContext(
+      <MainWorkspace />,
+      mockMacroUser
+    );
+
+    await findByText("Acompanhe e gerencie as ações das unidades autorizadas.");
+    const tabs = getAllByRole("tab");
+    const tabNames = tabs.map((t) => t.textContent?.trim());
+
+    expect(tabNames[0]).toContain("Minha Unidade");
+    expect(tabNames).toContain("Visão Geral");
+    expect(tabNames).toContain("Análise IA");
+    expect(tabNames).toContain("Chat IA");
+
+    expect(tabNames.some((t) => t?.includes("Gestão de Acessos"))).toBe(false);
+    expect(tabNames.some((t) => t?.includes("Checklist"))).toBe(false);
+  });
+
+  // 30. Navegação e abas do USUARIO: inicial Minha Unidade, sem Chat IA, sem Gestão de Acessos, sem Checklist
+  it("30. USUARIO inicia em Minha Unidade e tem acesso à Análise IA sem Chat IA nem Gestão de Acessos", async () => {
+    const { getAllByRole, queryByRole, findByText } = renderWithFilterContext(
+      <MainWorkspace />,
+      mockUsuarioUser
+    );
+
+    await findByText("Acompanhe e gerencie as ações das unidades autorizadas.");
+    const tabs = getAllByRole("tab");
+    const tabNames = tabs.map((t) => t.textContent?.trim());
+
+    expect(tabNames[0]).toContain("Minha Unidade");
+    expect(tabNames).toContain("Visão Geral");
+    expect(tabNames).toContain("Análise IA");
+
+    expect(tabNames.some((t) => t?.includes("Chat IA"))).toBe(false);
+    expect(tabNames.some((t) => t?.includes("Gestão de Acessos"))).toBe(false);
+    expect(tabNames.some((t) => t?.includes("Checklist"))).toBe(false);
+  });
+
+  // 31. Panorama das Unidades visível para ADMIN no Dashboard
+  it("31. Panorama das Unidades é renderizado exclusivamente para ADMIN no Dashboard", async () => {
+    const { getByText, findByText } = renderWithFilterContext(
+      <DashboardView />,
+      mockAdminUser
+    );
+
+    await findByText("Panorama das Unidades");
+    expect(getByText("Visão Consolidada (2 unidades)")).toBeTruthy();
+    expect(getByText("Feira de Santana")).toBeTruthy();
+    expect(getByText("Dendezeiros")).toBeTruthy();
+  });
+
+  // 32. Panorama das Unidades NÃO é renderizado para MACRO e USUARIO
+  it("32. Panorama das Unidades não é exibido para MACRO e USUARIO", async () => {
+    const { queryByText, findByText } = renderWithFilterContext(
+      <DashboardView />,
+      mockUsuarioUser
+    );
+
+    await findByText("Total de Ações");
+    expect(queryByText("Panorama das Unidades")).toBeNull();
+    expect(queryByText("Visualização do Dashboard:")).toBeTruthy();
+  });
+
+  // 33. AcoesTable suporta modo isReadOnly
+  it("33. AcoesTable no modo isReadOnly não exibe botão de cadastrar nem ações de edição/exclusão", async () => {
+    const { queryByText, queryByTitle, findByText } = renderWithFilterContext(
+      <AcoesTable isAdmin={false} isReadOnly={true} title="Tabela Somente Leitura" />,
+      mockUsuarioUser
+    );
+
+    await findByText("Tabela Somente Leitura (3)");
+    expect(queryByText("Cadastrar ação")).toBeNull();
+    expect(queryByTitle("Editar ação")).toBeNull();
+    expect(queryByTitle("Excluir ação")).toBeNull();
   });
 });

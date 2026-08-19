@@ -96,9 +96,15 @@ export function getPrazoInfo(dataFimStr: string | null | undefined, acaoStatus: 
 
 interface AcoesTableProps {
   isAdmin?: boolean;
+  isReadOnly?: boolean;
+  title?: string;
 }
 
-export default function AcoesTable({ isAdmin: propIsAdmin }: AcoesTableProps) {
+export default function AcoesTable({
+  isAdmin: propIsAdmin,
+  isReadOnly = false,
+  title,
+}: AcoesTableProps) {
   const { user, isAdmin: authIsAdmin, isMacroprocesso, isUsuario } = useAuth();
   const isAdmin = propIsAdmin !== undefined ? propIsAdmin : authIsAdmin;
 
@@ -108,6 +114,7 @@ export default function AcoesTable({ isAdmin: propIsAdmin }: AcoesTableProps) {
   const [editData, setEditData] = useState<Acao | null>(null);
 
   const canEditAcao = (a: Acao) => {
+    if (isReadOnly) return false;
     if (isAdmin) return true;
     if (isMacroprocesso) {
       return user?.unidades?.some(
@@ -121,16 +128,19 @@ export default function AcoesTable({ isAdmin: propIsAdmin }: AcoesTableProps) {
   };
 
   const handleEdit = (acao: Acao) => {
+    if (isReadOnly) return;
     setEditData(acao);
     setDialogOpen(true);
   };
 
   const handleNew = () => {
+    if (isReadOnly) return;
     setEditData(null);
     setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
+    if (isReadOnly) return;
     try {
       await deleteMutation.mutateAsync(id);
       toast.success("Ação excluída.");
@@ -139,12 +149,14 @@ export default function AcoesTable({ isAdmin: propIsAdmin }: AcoesTableProps) {
     }
   };
 
+  const displayTitle = title || "Listagem de Ações";
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-primary">
-            Listagem de Ações {filteredAcoes.length > 0 && `(${filteredAcoes.length})`}
+            {displayTitle} {filteredAcoes.length > 0 && `(${filteredAcoes.length})`}
           </p>
           {hasActiveFilters && (
             <Button
@@ -158,11 +170,13 @@ export default function AcoesTable({ isAdmin: propIsAdmin }: AcoesTableProps) {
             </Button>
           )}
         </div>
-        <div className="flex gap-2 shrink-0">
-          <Button onClick={handleNew} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Plus className="h-4 w-4 mr-1" /> Cadastrar ação
-          </Button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex gap-2 shrink-0">
+            <Button onClick={handleNew} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Plus className="h-4 w-4 mr-1" /> Cadastrar ação
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="rounded-[0.875rem] border border-border bg-card overflow-x-auto shadow-md">
@@ -178,14 +192,22 @@ export default function AcoesTable({ isAdmin: propIsAdmin }: AcoesTableProps) {
                 <TableHead>Status</TableHead>
                 <TableHead>Prioridade</TableHead>
                 <TableHead>Prazo</TableHead>
-                <TableHead className="w-[80px] text-center">Ações</TableHead>
+                {!isReadOnly && <TableHead className="w-[80px] text-center">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Carregando ações...</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={isReadOnly ? 8 : 9} className="text-center py-8 text-muted-foreground">
+                    Carregando ações...
+                  </TableCell>
+                </TableRow>
               ) : filteredAcoes.length === 0 ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhuma ação encontrada para os filtros ativos.</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={isReadOnly ? 8 : 9} className="text-center py-8 text-muted-foreground">
+                    Nenhuma ação encontrada para os filtros ativos.
+                  </TableCell>
+                </TableRow>
               ) : (
                 filteredAcoes.map((a) => (
                   <TableRow key={a.id} className="hover:bg-primary/5 transition-colors duration-200">
@@ -224,52 +246,54 @@ export default function AcoesTable({ isAdmin: propIsAdmin }: AcoesTableProps) {
                         return <span className="text-muted-foreground">{prazoInfo.formattedDate}</span>;
                       })()}
                     </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        {canEditAcao(a) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
-                            onClick={() => handleEdit(a)}
-                            title="Editar ação"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {isAdmin && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                                title="Excluir ação"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Excluir Ação</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja excluir a ação <strong>"{a.acao}"</strong>? Esta ação não pode ser desfeita.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(a.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    {!isReadOnly && (
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {canEditAcao(a) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
+                              onClick={() => handleEdit(a)}
+                              title="Editar ação"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {isAdmin && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                                  title="Excluir ação"
                                 >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-                    </TableCell>
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir Ação</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja excluir a ação <strong>"{a.acao}"</strong>? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(a.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}
@@ -278,7 +302,7 @@ export default function AcoesTable({ isAdmin: propIsAdmin }: AcoesTableProps) {
         </ScrollArea>
       </div>
 
-      <AcaoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} editData={editData} />
+      {!isReadOnly && <AcaoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} editData={editData} />}
     </div>
   );
 }

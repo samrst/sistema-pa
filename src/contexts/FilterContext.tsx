@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useMemo, useCallback } from "react";
 import { useAcoes, type Acao } from "@/hooks/useAcoes";
 import { useAuth } from "@/hooks/useAuth";
+import type { UsuarioAuth } from "@/types/auth";
 import {
   UNIDADES,
   CURSOS,
@@ -12,6 +13,8 @@ import {
   CAPACIDADES,
   TIPOS_ACAO,
 } from "@/lib/constants";
+
+export type ScopeType = "todas" | "minhas";
 
 export interface FilterState {
   search: string;
@@ -27,8 +30,80 @@ export interface FilterState {
   situacaoPrazo: string;
 }
 
-export function getFiltersSummary(filters: FilterState): string {
+export function normalizeName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+export function matchPersonName(targetText: string | null | undefined, userName: string): boolean {
+  if (!targetText || !userName) return false;
+
+  const normTarget = normalizeName(targetText);
+  const normUser = normalizeName(userName);
+
+  if (!normTarget || !normUser) return false;
+  if (normTarget === normUser) return true;
+
+  // Split multiple names separated by comma, semicolon, slash, or plus
+  const candidateNames = normTarget.split(/[,;/+&|\n\r]+/).map((s) => s.trim()).filter(Boolean);
+
+  for (const candidate of candidateNames) {
+    if (candidate === normUser) return true;
+
+    // Clean common prefixes
+    const prefixRegex = /^(prof\.|prof|professor|professora|coord\.|coordenador|coordenadora|docente|gestor|gestora)\s+/i;
+    const cleanedCandidate = candidate.replace(prefixRegex, "").trim();
+    const cleanedUser = normUser.replace(prefixRegex, "").trim();
+
+    if (cleanedCandidate && cleanedUser) {
+      if (cleanedCandidate === cleanedUser) return true;
+
+      // Word boundary token matching: ensure full user words exist in candidate
+      const userParts = cleanedUser.split(/\s+/).filter((p) => p.length >= 2);
+      const candidateWords = cleanedCandidate.split(/[\s.]+/).filter(Boolean);
+
+      if (userParts.length > 0) {
+        if (userParts.length >= 2) {
+          const allUserPartsMatch = userParts.every((part) => candidateWords.includes(part));
+          if (allUserPartsMatch) return true;
+        } else {
+          // Single word name (e.g. "Roberto"): check exact word match
+          if (candidateWords.includes(userParts[0])) return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+export function isMinhaAcao(acao: Acao, user: UsuarioAuth | null): boolean {
+  if (!user) return false;
+
+  // 1. Criador direto pelo ID
+  if (acao.usuario_criador_id && user.id && acao.usuario_criador_id === user.id) {
+    return true;
+  }
+
+  // 2. Responsável Principal
+  if (acao.responsavel_principal && matchPersonName(acao.responsavel_principal, user.nome)) {
+    return true;
+  }
+
+  // 3. Co-responsáveis
+  if (acao.co_responsaveis && matchPersonName(acao.co_responsaveis, user.nome)) {
+    return true;
+  }
+
+  return false;
+}
+
+export function getFiltersSummary(filters: FilterState, scope: ScopeType = "todas"): string {
   const parts: string[] = [];
+  if (scope === "minhas") parts.push("Escopo: Minhas ações");
   if (filters.unidade !== "all") parts.push(`Unidade: ${filters.unidade}`);
   if (filters.curso !== "all") parts.push(`Curso: ${filters.curso.replace("Técnico em ", "")}`);
   if (filters.status !== "all") parts.push(`Status: ${filters.status}`);
@@ -76,10 +151,14 @@ export interface FilterContextType {
   setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void;
   setFilters: (partial: Partial<FilterState>) => void;
   clearFilters: () => void;
+  scope: ScopeType;
+  setScope: (scope: ScopeType) => void;
   hasActiveFilters: boolean;
   activeFilterCount: number;
   filteredAcoes: Acao[];
+  baseAcoes: Acao[];
   totalAcoes: number;
+  totalScopedAcoes: number;
   availableUnidades: string[];
   availableCursos: string[];
   availableModalidades: string[];
@@ -138,9 +217,18 @@ function matchesPrazo(dataFimStr: string | null | undefined, acaoStatus: string,
 export function FilterProvider({ children }: { children: React.ReactNode }) {
   const { user, isMacroprocesso, isUsuario } = useAuth();
   const { data: acoes, isLoading } = useAcoes();
+  const [scope, setScope] = useState<ScopeType>("todas");
   const [filters, setFiltersState] = useState<FilterState>(initialFilters);
 
   const allAcoes = useMemo(() => acoes || [], [acoes]);
+
+  // Primary layer: determine base actions by scope (Todas as ações vs Minhas ações)
+  const baseAcoes = useMemo(() => {
+    if (scope === "minhas") {
+      return allAcoes.filter((a) => isMinhaAcao(a, user));
+    }
+    return allAcoes;
+  }, [allAcoes, scope, user]);
 
   // Derive available options respecting user permission scope
   const availableUnidades = useMemo(() => {
@@ -159,12 +247,12 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   }, [user, isUsuario, isMacroprocesso, allAcoes]);
 
   const availableCursos = useMemo(() => {
-    const fromData = Array.from(new Set(allAcoes.map((a) => a.curso).filter(Boolean)));
+    const fromData = Array.from(new Set(baseAcoes.map((a) => a.curso).filter(Boolean)));
     if (fromData.length > 0) {
       return Array.from(new Set([...fromData, ...CURSOS.filter((c) => c !== "Geral")]));
     }
     return CURSOS.filter((c) => c !== "Geral");
-  }, [allAcoes]);
+  }, [baseAcoes]);
 
   const availableModalidades = useMemo(() => {
     return MODALIDADE.filter((m) => m !== "Geral");
@@ -224,9 +312,9 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
 
   const hasActiveFilters = activeFilterCount > 0;
 
-  // Compute filtered actions with full intersection (AND)
+  // Secondary layer: apply FilterBar filters on top of baseAcoes
   const filteredAcoes = useMemo(() => {
-    return allAcoes.filter((a) => {
+    return baseAcoes.filter((a) => {
       // 1. Search query
       if (filters.search.trim()) {
         const q = filters.search.toLowerCase().trim();
@@ -312,17 +400,21 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
 
       return true;
     });
-  }, [allAcoes, filters]);
+  }, [baseAcoes, filters]);
 
   const value = useMemo<FilterContextType>(() => ({
     filters,
     setFilter,
     setFilters,
     clearFilters,
+    scope,
+    setScope,
     hasActiveFilters,
     activeFilterCount,
     filteredAcoes,
+    baseAcoes,
     totalAcoes: allAcoes.length,
+    totalScopedAcoes: baseAcoes.length,
     availableUnidades,
     availableCursos,
     availableModalidades,
@@ -338,9 +430,12 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
     setFilter,
     setFilters,
     clearFilters,
+    scope,
+    setScope,
     hasActiveFilters,
     activeFilterCount,
     filteredAcoes,
+    baseAcoes,
     allAcoes.length,
     availableUnidades,
     availableCursos,
