@@ -204,7 +204,7 @@ export default function UsuariosView() {
         </div>
 
         {/* Filtros */}
-        <div className="flex flex-wrap sm:flex-nowrap gap-2.5 items-center">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2.5 items-stretch sm:items-center w-full lg:w-auto">
           {/* Filtro Perfil */}
           <Select value={filterPerfil} onValueChange={setFilterPerfil}>
             <SelectTrigger className="w-full sm:w-[170px] h-10 rounded-[0.75rem] border-border bg-background text-xs">
@@ -278,11 +278,11 @@ export default function UsuariosView() {
                   <TableHead className="py-3.5 px-4 font-semibold text-xs uppercase tracking-wider text-primary">
                     Colaborador / E-mail
                   </TableHead>
-                  <TableHead className="py-3.5 px-4 font-semibold text-xs uppercase tracking-wider text-primary">
-                    Perfil
+                  <TableHead className="py-3.5 px-4 font-semibold text-xs uppercase tracking-wider text-primary text-center">
+                    Perfil de Acesso
                   </TableHead>
                   <TableHead className="py-3.5 px-4 font-semibold text-xs uppercase tracking-wider text-primary">
-                    Unidades Vinculadas
+                    Unidade(s) Autorizada(s)
                   </TableHead>
                   <TableHead className="py-3.5 px-4 font-semibold text-xs uppercase tracking-wider text-primary text-center">
                     Status
@@ -294,26 +294,35 @@ export default function UsuariosView() {
               </TableHeader>
               <TableBody>
                 {filteredUsuarios.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-muted/30 transition-colors">
-                    {/* Coluna Nome / E-mail */}
+                  <TableRow
+                    key={user.id}
+                    className="hover:bg-muted/30 transition-colors border-b border-border/60"
+                  >
+                    {/* Coluna Nome e E-mail */}
                     <TableCell className="py-3.5 px-4">
-                      <div className="font-semibold text-sm text-foreground">{user.nome}</div>
-                      <div className="text-xs text-muted-foreground font-mono mt-0.5">{user.email}</div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-sm text-foreground">
+                          {user.nome}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {user.email}
+                        </span>
+                      </div>
                     </TableCell>
 
                     {/* Coluna Perfil */}
-                    <TableCell className="py-3.5 px-4 whitespace-nowrap">
+                    <TableCell className="py-3.5 px-4 text-center whitespace-nowrap">
                       {getPerfilBadge(user.perfil)}
                     </TableCell>
 
                     {/* Coluna Unidades */}
                     <TableCell className="py-3.5 px-4">
-                      {user.perfil === "ADMIN" && user.unidades.length === 0 ? (
-                        <span className="text-xs text-muted-foreground italic">
-                          Acesso Global (Todas)
+                      {user.perfil === "ADMIN" ? (
+                        <span className="text-xs text-muted-foreground font-medium italic">
+                          Acesso Global (Todas as unidades)
                         </span>
                       ) : user.unidades.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5 max-w-md">
+                        <div className="flex flex-wrap gap-1 max-w-[280px]">
                           {user.unidades.map((u) => (
                             <Badge
                               key={u.id}
@@ -360,6 +369,7 @@ export default function UsuariosView() {
                           onClick={() => handleEdit(user)}
                           className="h-8 w-8 p-0 rounded-lg hover:bg-primary-soft hover:text-primary"
                           title="Editar Usuário"
+                          aria-label={`Editar usuário ${user.nome}`}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -371,6 +381,7 @@ export default function UsuariosView() {
                           onClick={() => handleOpenSenha(user)}
                           className="h-8 w-8 p-0 rounded-lg hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/40 dark:hover:text-amber-400"
                           title="Alterar Senha"
+                          aria-label={`Alterar senha do usuário ${user.nome}`}
                         >
                           <KeyRound className="h-4 w-4" />
                         </Button>
@@ -386,6 +397,7 @@ export default function UsuariosView() {
                               : "hover:bg-success/10 hover:text-success text-muted-foreground"
                           }`}
                           title={user.ativo ? "Desativar Usuário" : "Ativar Usuário"}
+                          aria-label={`${user.ativo ? "Desativar" : "Ativar"} usuário ${user.nome}`}
                         >
                           <Power className="h-4 w-4" />
                         </Button>

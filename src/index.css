@@ -157,9 +157,12 @@
 .agent-html {
   display: grid;
   gap: 6px;
-  line-height: 1.6;
-  font-size: 13px;
-  color: hsl(var(--foreground) / 0.9);
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: hsl(var(--foreground));
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 /* ─── Headings ─── */

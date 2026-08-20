@@ -175,13 +175,13 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0">
-        <DialogHeader className="p-6 pb-0 border-b border-border">
-          <DialogTitle className="font-heading text-xl text-primary">{editData ? "Editar Ação" : "Nova Ação SAEP"}</DialogTitle>
+        <DialogHeader className="p-4 sm:p-6 pb-0 border-b border-border">
+          <DialogTitle className="font-heading text-lg sm:text-xl text-primary">{editData ? "Editar Ação" : "Nova Ação SAEP"}</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="max-h-[70vh] px-6 pb-6">
+        <ScrollArea className="max-h-[70vh] px-4 sm:px-6 pb-6">
           <div className="space-y-3">
             <SectionTitle>1. Identificação</SectionTitle>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-primary font-semibold">Unidade *</Label>
                 <Select
@@ -238,7 +238,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
               <Label className="text-primary font-semibold">Ação *</Label>
               <Textarea value={form.acao} onChange={(e) => set("acao", e.target.value)} rows={2} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-primary font-semibold">Tipo de Ação *</Label>
                 <Select value={form.tipo_acao} onValueChange={(v) => set("tipo_acao", v)}>
@@ -254,7 +254,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
 
             <Separator className="my-4" />
             <SectionTitle>4. Responsáveis</SectionTitle>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-primary font-semibold">Responsável principal *</Label>
                 <Input value={form.responsavel_principal} onChange={(e) => set("responsavel_principal", e.target.value)} />
@@ -282,7 +282,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
 
             <Separator className="my-4" />
             <SectionTitle>5. Prazos</SectionTitle>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-primary font-semibold">Data de Início</Label>
                 <Input type="date" value={form.data_inicio} onChange={(e) => set("data_inicio", e.target.value)} />
@@ -300,7 +300,7 @@ export default function AcaoFormDialog({ open, onOpenChange, editData }: Props) 
 
             <Separator className="my-4" />
             <SectionTitle>6. Acompanhamento</SectionTitle>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-primary font-semibold">Status</Label>
                 <Select value={form.status} onValueChange={(v) => set("status", v)}>

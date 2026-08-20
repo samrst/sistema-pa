@@ -132,22 +132,25 @@ const MainWorkspace = () => {
               <Button
                 onClick={handleExportPdf}
                 disabled={!filteredAcoes || filteredAcoes.length === 0}
-                className="bg-white/15 text-white border border-white/25 px-[18px] py-[10px] rounded-[8px] font-['Neo_Sans_Pro',sans-serif] italic text-[14px] font-semibold transition-all duration-300 ease-in-out hover:bg-white/25 hover:-translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="bg-white/15 text-white border border-white/25 px-2.5 sm:px-[18px] py-1.5 sm:py-[10px] rounded-[8px] font-['Neo_Sans_Pro',sans-serif] italic text-xs sm:text-[14px] font-semibold transition-all duration-300 ease-in-out hover:bg-white/25 hover:-translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shrink-0"
                 title="Exportar ações filtradas em PDF"
+                aria-label={`Exportar ${filteredAcoes.length} ações filtradas em PDF`}
               >
-                <FileDown className="h-4 w-4 mr-2" />
-                Exportar PDF {filteredAcoes.length > 0 && `(${filteredAcoes.length})`}
+                <FileDown className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
+                <span className="hidden sm:inline">Exportar PDF </span>
+                {filteredAcoes.length > 0 && `(${filteredAcoes.length})`}
               </Button>
             </li>
 
             <li>
               <Button
                 onClick={logout}
-                className="bg-white/15 text-white border border-white/25 px-[18px] py-[10px] rounded-[8px] font-sans text-[14px] font-semibold transition-all duration-300 ease-in-out hover:bg-white/25 hover:-translate-y-[2px]"
+                className="bg-white/15 text-white border border-white/25 px-2.5 sm:px-[18px] py-1.5 sm:py-[10px] rounded-[8px] font-sans text-xs sm:text-[14px] font-semibold transition-all duration-300 ease-in-out hover:bg-white/25 hover:-translate-y-[2px] shrink-0"
                 title="Encerrar sessão"
+                aria-label="Encerrar sessão"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
+                <LogOut className="mr-1 sm:mr-2 h-4 w-4 shrink-0" />
+                <span>Sair</span>
               </Button>
             </li>
           </ul>
@@ -172,61 +175,63 @@ const MainWorkspace = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="mb-8 flex-wrap">
-            {/* ADMIN Tabs */}
-            {isAdmin && (
-              <>
-                <TabsTrigger value="visao-geral" className="gap-1.5">
-                  <LayoutDashboard className="h-4 w-4" /> Visão Geral
-                </TabsTrigger>
-                <TabsTrigger value="acoes" className="gap-1.5">
-                  <TableProperties className="h-4 w-4" /> Ações
-                </TabsTrigger>
-                <TabsTrigger value="analise" className="gap-1.5">
-                  <BrainCircuit className="h-4 w-4" /> Análise IA
-                </TabsTrigger>
-                <TabsTrigger value="agente-admin" className="gap-1.5">
-                  <MessageSquare className="h-4 w-4" /> Chat IA
-                </TabsTrigger>
-                <TabsTrigger value="usuarios" className="gap-1.5">
-                  <Users className="h-4 w-4" /> Gestão de Acessos
-                </TabsTrigger>
-              </>
-            )}
+          <div className="w-full overflow-x-auto pb-2 mb-6 -mx-1 px-1">
+            <TabsList className="w-max min-w-full justify-start sm:justify-start gap-1">
+              {/* ADMIN Tabs */}
+              {isAdmin && (
+                <>
+                  <TabsTrigger value="visao-geral" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <LayoutDashboard className="h-4 w-4" /> Visão Geral
+                  </TabsTrigger>
+                  <TabsTrigger value="acoes" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <TableProperties className="h-4 w-4" /> Ações
+                  </TabsTrigger>
+                  <TabsTrigger value="analise" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <BrainCircuit className="h-4 w-4" /> Análise IA
+                  </TabsTrigger>
+                  <TabsTrigger value="agente-admin" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <MessageSquare className="h-4 w-4" /> Chat IA
+                  </TabsTrigger>
+                  <TabsTrigger value="usuarios" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <Users className="h-4 w-4" /> Gestão de Acessos
+                  </TabsTrigger>
+                </>
+              )}
 
-            {/* MACROPROCESSO_TECNICO Tabs */}
-            {isMacroprocesso && (
-              <>
-                <TabsTrigger value="minha-unidade" className="gap-1.5">
-                  <TableProperties className="h-4 w-4" /> Minha Unidade
-                </TabsTrigger>
-                <TabsTrigger value="visao-geral" className="gap-1.5">
-                  <LayoutDashboard className="h-4 w-4" /> Visão Geral
-                </TabsTrigger>
-                <TabsTrigger value="analise" className="gap-1.5">
-                  <BrainCircuit className="h-4 w-4" /> Análise IA
-                </TabsTrigger>
-                <TabsTrigger value="agente-admin" className="gap-1.5">
-                  <MessageSquare className="h-4 w-4" /> Chat IA
-                </TabsTrigger>
-              </>
-            )}
+              {/* MACROPROCESSO_TECNICO Tabs */}
+              {isMacroprocesso && (
+                <>
+                  <TabsTrigger value="minha-unidade" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <TableProperties className="h-4 w-4" /> Minha Unidade
+                  </TabsTrigger>
+                  <TabsTrigger value="visao-geral" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <LayoutDashboard className="h-4 w-4" /> Visão Geral
+                  </TabsTrigger>
+                  <TabsTrigger value="analise" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <BrainCircuit className="h-4 w-4" /> Análise IA
+                  </TabsTrigger>
+                  <TabsTrigger value="agente-admin" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <MessageSquare className="h-4 w-4" /> Chat IA
+                  </TabsTrigger>
+                </>
+              )}
 
-            {/* USUARIO Tabs */}
-            {isUsuario && (
-              <>
-                <TabsTrigger value="minha-unidade" className="gap-1.5">
-                  <TableProperties className="h-4 w-4" /> Minha Unidade
-                </TabsTrigger>
-                <TabsTrigger value="visao-geral" className="gap-1.5">
-                  <LayoutDashboard className="h-4 w-4" /> Visão Geral
-                </TabsTrigger>
-                <TabsTrigger value="analise" className="gap-1.5">
-                  <BrainCircuit className="h-4 w-4" /> Análise IA
-                </TabsTrigger>
-              </>
-            )}
-          </TabsList>
+              {/* USUARIO Tabs */}
+              {isUsuario && (
+                <>
+                  <TabsTrigger value="minha-unidade" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <TableProperties className="h-4 w-4" /> Minha Unidade
+                  </TabsTrigger>
+                  <TabsTrigger value="visao-geral" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <LayoutDashboard className="h-4 w-4" /> Visão Geral
+                  </TabsTrigger>
+                  <TabsTrigger value="analise" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <BrainCircuit className="h-4 w-4" /> Análise IA
+                  </TabsTrigger>
+                </>
+              )}
+            </TabsList>
+          </div>
 
           {/* ABA VISÃO GERAL */}
           <TabsContent value="visao-geral" className="space-y-6">

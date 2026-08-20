@@ -156,3 +156,35 @@ header{
         display:none;
     }
 }
+
+@media(max-width:640px){
+
+    .saep-nav{
+        padding:0 1rem;
+    }
+
+    .saep-logo{
+        width: 85px;
+    }
+
+    .saep-hero{
+        padding: 2.75rem 1.25rem 2.25rem;
+    }
+
+    .saep-hero h1{
+        font-size: clamp(1.75rem, 6.5vw, 2.25rem);
+        line-height: 1.15;
+        margin-bottom: 0.75rem;
+    }
+
+    .saep-hero p{
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .saep-eyebrow{
+        font-size: 11px;
+        letter-spacing: 2px;
+        margin-bottom: 0.5rem;
+    }
+}

@@ -256,6 +256,7 @@ export default function AcoesTable({
                               className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
                               onClick={() => handleEdit(a)}
                               title="Editar ação"
+                              aria-label={`Editar ação ${a.acao}`}
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
@@ -268,6 +269,7 @@ export default function AcoesTable({
                                   size="icon"
                                   className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
                                   title="Excluir ação"
+                                  aria-label={`Excluir ação ${a.acao}`}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>

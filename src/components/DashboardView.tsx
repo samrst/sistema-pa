@@ -442,23 +442,25 @@ export default function DashboardView() {
             {modalidadeData.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível para os filtros ativos</p>
             ) : (
-              <div className="flex items-center gap-6">
-                <ResponsiveContainer width="50%" height={220}>
-                  <PieChart>
-                    <Pie data={modalidadeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40}>
-                      {modalidadeData.map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row items-center justify-around gap-4 sm:gap-6">
+                <div className="w-full sm:w-1/2 h-[200px] sm:h-[220px] flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={modalidadeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={38}>
+                        {modalidadeData.map((_, i) => (
+                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-1.5 sm:space-y-2 w-full sm:w-auto flex flex-wrap sm:flex-col justify-center sm:justify-start gap-x-4 gap-y-1">
                   {modalidadeData.map((m, i) => (
-                    <div key={m.name} className="flex items-center gap-2 text-sm">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                      <span>
-                        {m.name}: <strong className="text-primary">{m.value}</strong>
+                    <div key={m.name} className="flex items-center gap-2 text-xs sm:text-sm">
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                      <span className="text-foreground/90">
+                        {m.name}: <strong className="text-primary font-semibold">{m.value}</strong>
                       </span>
                     </div>
                   ))}
@@ -498,23 +500,25 @@ export default function DashboardView() {
             {statusData.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível para os filtros ativos</p>
             ) : (
-              <div className="flex items-center gap-6">
-                <ResponsiveContainer width="50%" height={220}>
-                  <PieChart>
-                    <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40}>
-                      {statusData.map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row items-center justify-around gap-4 sm:gap-6">
+                <div className="w-full sm:w-1/2 h-[200px] sm:h-[220px] flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={38}>
+                        {statusData.map((_, i) => (
+                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-1.5 sm:space-y-2 w-full sm:w-auto flex flex-wrap sm:flex-col justify-center sm:justify-start gap-x-4 gap-y-1">
                   {statusData.map((s, i) => (
-                    <div key={s.name} className="flex items-center gap-2 text-sm">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                      <span>
-                        {s.name}: <strong className="text-primary">{s.value}</strong>
+                    <div key={s.name} className="flex items-center gap-2 text-xs sm:text-sm">
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                      <span className="text-foreground/90">
+                        {s.name}: <strong className="text-primary font-semibold">{s.value}</strong>
                       </span>
                     </div>
                   ))}

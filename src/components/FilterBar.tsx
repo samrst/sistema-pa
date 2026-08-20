@@ -65,8 +65,9 @@ export default function FilterBar() {
             {filters.search && (
               <button
                 onClick={() => setFilter("search", "")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
                 title="Limpar busca"
+                aria-label="Limpar busca"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -181,7 +182,7 @@ export default function FilterBar() {
         {/* Secondary / Advanced Filters Section (Expandable) */}
         {expanded && (
           <div className="pt-3 border-t border-border/60 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
               {/* Modalidade */}
               <div>
                 <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">
@@ -347,7 +348,9 @@ export default function FilterBar() {
                 <button
                   onClick={() => setFilter("unidade", "all")}
                   disabled={isSingleUnitUser}
-                  className="hover:bg-primary/10 rounded p-0.5"
+                  className="hover:bg-primary/10 rounded p-1 -mr-1 inline-flex items-center justify-center"
+                  aria-label={`Remover filtro de unidade: ${filters.unidade}`}
+                  title="Remover filtro"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -357,7 +360,12 @@ export default function FilterBar() {
             {filters.curso !== "all" && (
               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 pr-1">
                 <span>Curso: {filters.curso.replace("Técnico em ", "")}</span>
-                <button onClick={() => setFilter("curso", "all")} className="hover:bg-primary/10 rounded p-0.5">
+                <button
+                  onClick={() => setFilter("curso", "all")}
+                  className="hover:bg-primary/10 rounded p-1 -mr-1 inline-flex items-center justify-center"
+                  aria-label={`Remover filtro de curso: ${filters.curso}`}
+                  title="Remover filtro"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
@@ -366,7 +374,12 @@ export default function FilterBar() {
             {filters.status !== "all" && (
               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 pr-1">
                 <span>Status: {filters.status}</span>
-                <button onClick={() => setFilter("status", "all")} className="hover:bg-primary/10 rounded p-0.5">
+                <button
+                  onClick={() => setFilter("status", "all")}
+                  className="hover:bg-primary/10 rounded p-1 -mr-1 inline-flex items-center justify-center"
+                  aria-label={`Remover filtro de status: ${filters.status}`}
+                  title="Remover filtro"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
@@ -388,7 +401,12 @@ export default function FilterBar() {
                     ? "Concluídas"
                     : "Sem prazo"}
                 </span>
-                <button onClick={() => setFilter("situacaoPrazo", "all")} className="hover:bg-warning/20 rounded p-0.5">
+                <button
+                  onClick={() => setFilter("situacaoPrazo", "all")}
+                  className="hover:bg-warning/20 rounded p-1 -mr-1 inline-flex items-center justify-center"
+                  aria-label="Remover filtro de prazo"
+                  title="Remover filtro"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
@@ -397,7 +415,12 @@ export default function FilterBar() {
             {filters.criticidade !== "all" && (
               <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 gap-1 pr-1">
                 <span>Criticidade: {filters.criticidade}</span>
-                <button onClick={() => setFilter("criticidade", "all")} className="hover:bg-destructive/20 rounded p-0.5">
+                <button
+                  onClick={() => setFilter("criticidade", "all")}
+                  className="hover:bg-destructive/20 rounded p-1 -mr-1 inline-flex items-center justify-center"
+                  aria-label={`Remover filtro de criticidade: ${filters.criticidade}`}
+                  title="Remover filtro"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
@@ -406,7 +429,12 @@ export default function FilterBar() {
             {filters.prioridade !== "all" && (
               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 pr-1">
                 <span>Prioridade: {filters.prioridade}</span>
-                <button onClick={() => setFilter("prioridade", "all")} className="hover:bg-primary/10 rounded p-0.5">
+                <button
+                  onClick={() => setFilter("prioridade", "all")}
+                  className="hover:bg-primary/10 rounded p-1 -mr-1 inline-flex items-center justify-center"
+                  aria-label={`Remover filtro de prioridade: ${filters.prioridade}`}
+                  title="Remover filtro"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
@@ -415,7 +443,12 @@ export default function FilterBar() {
             {filters.risco !== "all" && (
               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 pr-1">
                 <span>Risco: {filters.risco}</span>
-                <button onClick={() => setFilter("risco", "all")} className="hover:bg-primary/10 rounded p-0.5">
+                <button
+                  onClick={() => setFilter("risco", "all")}
+                  className="hover:bg-primary/10 rounded p-1 -mr-1 inline-flex items-center justify-center"
+                  aria-label={`Remover filtro de risco: ${filters.risco}`}
+                  title="Remover filtro"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
@@ -424,7 +457,12 @@ export default function FilterBar() {
             {filters.modalidade !== "all" && (
               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 pr-1">
                 <span>Modalidade: {filters.modalidade}</span>
-                <button onClick={() => setFilter("modalidade", "all")} className="hover:bg-primary/10 rounded p-0.5">
+                <button
+                  onClick={() => setFilter("modalidade", "all")}
+                  className="hover:bg-primary/10 rounded p-1 -mr-1 inline-flex items-center justify-center"
+                  aria-label={`Remover filtro de modalidade: ${filters.modalidade}`}
+                  title="Remover filtro"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
@@ -433,7 +471,12 @@ export default function FilterBar() {
             {filters.tipo_acao !== "all" && (
               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 pr-1">
                 <span>Tipo: {filters.tipo_acao}</span>
-                <button onClick={() => setFilter("tipo_acao", "all")} className="hover:bg-primary/10 rounded p-0.5">
+                <button
+                  onClick={() => setFilter("tipo_acao", "all")}
+                  className="hover:bg-primary/10 rounded p-1 -mr-1 inline-flex items-center justify-center"
+                  aria-label={`Remover filtro de tipo: ${filters.tipo_acao}`}
+                  title="Remover filtro"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
@@ -442,7 +485,12 @@ export default function FilterBar() {
             {filters.capacidade_saep !== "all" && (
               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 pr-1">
                 <span>Cap.: {filters.capacidade_saep}</span>
-                <button onClick={() => setFilter("capacidade_saep", "all")} className="hover:bg-primary/10 rounded p-0.5">
+                <button
+                  onClick={() => setFilter("capacidade_saep", "all")}
+                  className="hover:bg-primary/10 rounded p-1 -mr-1 inline-flex items-center justify-center"
+                  aria-label={`Remover filtro de capacidade: ${filters.capacidade_saep}`}
+                  title="Remover filtro"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </Badge>

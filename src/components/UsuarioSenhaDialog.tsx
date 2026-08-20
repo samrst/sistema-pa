@@ -74,9 +74,9 @@ export default function UsuarioSenhaDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md p-0 overflow-hidden rounded-[1.25rem]">
-        <DialogHeader className="p-6 pb-4 border-b border-border bg-card">
-          <DialogTitle className="text-xl font-heading font-bold text-primary flex items-center gap-2">
-            <KeyRound className="h-5 w-5 text-primary" />
+        <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border bg-card">
+          <DialogTitle className="text-lg sm:text-xl font-heading font-bold text-primary flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-primary shrink-0" />
             Alterar Senha de Acesso
           </DialogTitle>
           <p className="text-xs text-muted-foreground mt-1">
@@ -88,7 +88,7 @@ export default function UsuarioSenhaDialog({
           </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="nova-senha" className="text-xs font-semibold text-primary uppercase tracking-wider">
               Nova Senha (mínimo 6 caracteres) *
@@ -135,7 +135,7 @@ export default function UsuarioSenhaDialog({
                 }}
                 placeholder="Repita a nova senha"
                 disabled={isPending}
-                className="!pl-11 !pr-11 h-10 rounded-[0.75rem] border-border bg-background"
+                className="!pl-11 h-10 rounded-[0.75rem] border-border bg-background"
               />
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function UsuarioSenhaDialog({
             </div>
           )}
 
-          <DialogFooter className="pt-4 flex flex-row items-center justify-end gap-2 border-t border-border mt-4">
+          <DialogFooter className="pt-3 border-t border-border/60 flex flex-row items-center justify-end gap-2">
             <Button
               type="button"
               variant="outline"

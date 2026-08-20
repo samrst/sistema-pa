@@ -124,7 +124,8 @@ const AnalistaGemini = ({ dadosAcoes }: AnalistaGeminiProps) => {
             <button
               onClick={analisarComIA}
               disabled={carregando || acoesParaAnalisar.length === 0}
-              className="inline-flex items-center justify-center px-8 py-3 font-semibold text-sm text-primary-foreground bg-primary rounded-[0.875rem] hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
+              className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 font-semibold text-sm text-primary-foreground bg-primary rounded-[0.875rem] hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
+              aria-label="Gerar Relatório Executivo com Inteligência Artificial"
             >
               {carregando ? (
                 <>
@@ -144,29 +145,30 @@ const AnalistaGemini = ({ dadosAcoes }: AnalistaGeminiProps) => {
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-3">
           {/* Report Header */}
           <div className="bg-card border border-border rounded-[0.875rem] shadow-md overflow-hidden">
-            <div className="bg-primary px-4 sm:px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary-foreground/20 rounded-[0.5rem]">
+            <div className="bg-primary px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 bg-primary-foreground/20 rounded-[0.5rem] shrink-0">
                   <Sparkles size={20} className="text-primary-foreground" />
                 </div>
-                <div>
-                  <h3 className="font-heading font-bold text-primary-foreground text-sm sm:text-base">Relatório Executivo — Plano de Ações SAEP</h3>
-                  <p className="text-[11px] text-primary-foreground/70">
+                <div className="min-w-0">
+                  <h3 className="font-heading font-bold text-primary-foreground text-sm sm:text-base truncate">Relatório Executivo — Plano de Ações SAEP</h3>
+                  <p className="text-[11px] text-primary-foreground/70 truncate">
                     SENAI Bahia · Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {acoesParaAnalisar.length} {acoesParaAnalisar.length === 1 ? "ação analisada" : "ações analisadas"}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => exportRelatorioPdf(analise, acoesParaAnalisar.length, getFiltersSummary(filters))}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground rounded-[0.5rem] transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-semibold bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground rounded-[0.5rem] transition-colors shrink-0"
                 title="Baixar relatório em PDF"
+                aria-label="Baixar relatório em PDF"
               >
                 <Download size={14} />
                 <span className="hidden sm:inline">Baixar PDF</span>
               </button>
             </div>
 
-            <div className="agent-html p-4 sm:p-6">
+            <div className="agent-html p-4 sm:p-6 overflow-x-auto">
               <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(analise) }} />
             </div>
           </div>

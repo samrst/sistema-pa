@@ -246,18 +246,18 @@ const AdminChat = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col h-[calc(100vh-12rem)]">
+    <div className="w-full max-w-4xl mx-auto flex flex-col h-[calc(100vh-12rem)] max-h-[calc(100dvh-12rem)] min-h-[420px]">
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border mb-4">
-        <div className="p-2.5 bg-primary/10 rounded-[0.75rem] text-primary">
+        <div className="p-2.5 bg-primary/10 rounded-[0.75rem] text-primary shrink-0">
           <BrainCircuit size={24} />
         </div>
-        <div>
-          <h2 className="text-base font-heading font-bold text-primary flex items-center gap-2">
+        <div className="min-w-0">
+          <h2 className="text-base font-heading font-bold text-primary flex items-center gap-2 truncate">
             Agente IA — Assessoria Estratégica
-            <Sparkles size={14} className="text-primary" />
+            <Sparkles size={14} className="text-primary shrink-0" />
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground truncate">
             Especialista em SAEP, Gestão Educacional e Planos de Ação
           </p>
         </div>
@@ -265,8 +265,9 @@ const AdminChat = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="ml-auto text-xs text-muted-foreground hover:text-primary"
+            className="ml-auto text-xs text-muted-foreground hover:text-primary shrink-0"
             onClick={() => setMessages([])}
+            aria-label="Limpar conversa"
           >
             <Trash2 size={14} className="mr-1" /> Limpar
           </Button>
@@ -302,14 +303,14 @@ const AdminChat = () => {
           messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[85%] rounded-[0.875rem] px-4 py-3 text-sm ${
+                className={`max-w-[90%] sm:max-w-[85%] rounded-[0.875rem] px-4 py-3 text-sm overflow-hidden ${
                   m.role === "user"
                     ? "bg-primary text-primary-foreground rounded-br-md"
                     : "bg-muted text-foreground rounded-bl-md"
                 }`}
               >
                 {m.role === "assistant" ? (
-                  <div>
+                  <div className="overflow-x-auto">
                     <div
                       className="agent-html"
                       dangerouslySetInnerHTML={{ __html: sanitizeHtml(m.content) }}
@@ -340,7 +341,12 @@ const AdminChat = () => {
             <div key={i} className="flex items-center gap-1.5 text-xs bg-muted rounded-[0.75rem] px-2.5 py-1.5 border border-border">
               <FileText size={12} className="text-primary shrink-0" />
               <span className="truncate max-w-[120px]">{f.name}</span>
-              <button onClick={() => removeFile(i)} className="text-muted-foreground hover:text-destructive transition-colors">
+              <button
+                onClick={() => removeFile(i)}
+                className="text-muted-foreground hover:text-destructive transition-colors p-0.5"
+                aria-label={`Remover anexo ${f.name}`}
+                title="Remover anexo"
+              >
                 <X size={12} />
               </button>
             </div>
@@ -366,6 +372,7 @@ const AdminChat = () => {
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
             title="Anexar arquivo"
+            aria-label="Anexar arquivo"
           >
             <Paperclip size={18} />
           </Button>
@@ -377,6 +384,7 @@ const AdminChat = () => {
             onClick={toggleMic}
             disabled={isLoading}
             title={isListening ? "Parar gravação" : "Usar microfone"}
+            aria-label={isListening ? "Parar gravação de áudio" : "Gravar áudio com microfone"}
           >
             {isListening ? <MicOff size={18} /> : <Mic size={18} />}
           </Button>
@@ -395,6 +403,7 @@ const AdminChat = () => {
             onClick={() => send(input)}
             disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
             title="Enviar mensagem"
+            aria-label="Enviar mensagem"
           >
             {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </Button>

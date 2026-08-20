@@ -174,9 +174,9 @@ export default function UsuarioFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-[1.25rem]">
-        <DialogHeader className="p-6 pb-4 border-b border-border bg-card">
-          <DialogTitle className="text-xl font-heading font-bold text-primary flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
+        <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border bg-card">
+          <DialogTitle className="text-lg sm:text-xl font-heading font-bold text-primary flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-primary shrink-0" />
             {isEditing ? "Editar Usuário" : "Novo Usuário"}
           </DialogTitle>
           <p className="text-xs text-muted-foreground mt-1">
@@ -187,7 +187,7 @@ export default function UsuarioFormDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-          <ScrollArea className="flex-1 p-6 space-y-5 overflow-y-auto">
+          <ScrollArea className="flex-1 p-4 sm:p-6 space-y-5 overflow-y-auto">
             <div className="space-y-4">
               {/* Nome */}
               <div className="space-y-1.5">
